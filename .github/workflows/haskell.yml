@@ -1,0 +1,22 @@
+name: Haskell CI
+
+on: [pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Stack
+      run: |
+        wget -qO- https://get.haskellstack.org/ | sh
+
+    - name: Build
+      run: |
+        stack build --fast --pedantic --ghc-options '-j'
+
+    - name: Weeder
+      run: |
+        curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s . --build
