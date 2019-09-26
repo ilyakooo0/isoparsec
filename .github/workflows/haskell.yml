@@ -19,7 +19,7 @@ jobs:
 
     - name: Test
       run: |
-        run stack test --fast --pedantic --ghc-options '-j'
+        stack test --fast --pedantic --ghc-options '-j'
 
     - name: Weeder
       run: |
