@@ -15,7 +15,11 @@ jobs:
 
     - name: Build
       run: |
-        stack build --fast --pedantic --ghc-options '-j'
+        stack build --fast --pedantic --ghc-options '-j' --test --no-run-tests --bench --no-run-benchmarks
+
+    - name: Test
+      run: |
+        run stack test --fast --pedantic --ghc-options '-j'
 
     - name: Weeder
       run: |
