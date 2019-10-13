@@ -21,10 +21,12 @@ description:         Please see the README on GitHub at <https://github.com/ilya
 
 dependencies:
 - base >= 4.7 && < 5
-- optics-core
 
 library:
   source-dirs: src
+
+  dependencies:
+  - optics-core
 
 executables:
   isoparsec-exe:
