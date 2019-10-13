@@ -7,6 +7,9 @@ module Control.Arrow.Extra.BaseArrow
 import qualified Control.Arrow    as A
 import           Control.Category
 
+infixr 3 ***
+infixr 3 &&&
+
 class Category a => BaseArrow a where
   {-# MINIMAL (***), (&&&) #-}
 
