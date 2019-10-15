@@ -1,18 +1,24 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances, MonoLocalBinds, NoImplicitPrelude #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Control.Arrow.Extra.ArrowChoice
-  ( ArrowChoice(..)
-  ) where
+  ( ArrowChoice (..),
+  )
+where
 
-import qualified Control.Arrow                 as A
-import           Control.Arrow.Extra.BaseArrow
-import           Control.Category
-import           Data.Either
+import qualified Control.Arrow as A
+import Control.Arrow.Extra.BaseArrow
+import Control.Category
+import Data.Either
 
-infixr 2 +++
-infixr 2 |||
+infixl 2 +++
+
+infixl 2 |||
 
 class BaseArrow a => ArrowChoice a where
+
   left :: a b c -> a (Either b d) (Either c d)
   left = (+++ id)
 
@@ -24,7 +30,11 @@ class BaseArrow a => ArrowChoice a where
   (|||) :: a b d -> a c d -> a (Either b c) d
 
 instance A.ArrowChoice a => ArrowChoice a where
+
   left = A.left
+
   right = A.right
+
   (+++) = (A.+++)
+
   (|||) = (A.|||)

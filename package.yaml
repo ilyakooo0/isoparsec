@@ -27,6 +27,11 @@ library:
 
   dependencies:
   - optics-core
+  - megaparsec
+  - containers
+  - bytestring
+  - text
+
 
 executables:
   isoparsec-exe:
@@ -47,5 +52,9 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    dependencies: []
-    # - isoparsec
+    dependencies:
+    - isoparsec
+    - tasty
+    - tasty-hspec
+    - hspec
+    - optics

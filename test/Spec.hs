@@ -1,2 +1,13 @@
+import qualified Spec.Megaparsec.BasicNums as BasicNums
+import Test.Tasty
+import Test.Tasty.Hspec
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = do
+  spec <- testSpec "Basic megaparsec test" BasicNums.spec
+  defaultMain
+    ( testGroup
+        "tests"
+        [ spec
+        ]
+    )

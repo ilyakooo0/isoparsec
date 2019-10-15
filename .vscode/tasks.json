@@ -1,0 +1,50 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Stack Build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "type": "shell",
+      "command": "stack build --fast --no-interleaved-output",
+      "problemMatcher": {
+        "owner": "haskell",
+        "fileLocation": [
+          "absolute"
+        ],
+        "pattern": [
+          {
+            "regexp": "^(\\S+\\s+>\\s*)?\\s*(\\S+):(\\d+):(\\d+): (warning|error|info):.*$",
+            "file": 2,
+            "line": 3,
+            "column": 4,
+            "severity": 5
+          },
+          {
+            "regexp": "^(\\s+•\\s+|    \\s*)([^\\d\\W].+)$",
+            "message": 2
+          }
+        ]
+      },
+      "presentation": {
+        "showReuseMessage": false,
+        "focus": false
+      }
+    },
+    {
+      "label": "Stack Install",
+      "type": "shell",
+      "command": "stack install --fast",
+      "dependsOn": "Stack Build",
+      "problemMatcher": [],
+      "presentation": {
+        "showReuseMessage": false,
+        "focus": false
+      }
+    }
+  ]
+}

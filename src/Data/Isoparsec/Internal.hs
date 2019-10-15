@@ -1,62 +1,86 @@
-{-# LANGUAGE MultiParamTypeClasses, AllowAmbiguousTypes, LiberalTypeSynonyms, FlexibleContexts, DefaultSignatures, FunctionalDependencies, FlexibleInstances, MonoLocalBinds, LambdaCase, TypeApplications #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LiberalTypeSynonyms #-}
+{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Data.Isoparsec.Internal
-  ( SemiIso'(..)
-  , SemiIso
-  , iso'
-  , IsoparsecFail(..)
-  , Isoparsec(..)
-  , (<.>)
-  ) where
+  ( SemiIso' (..),
+    SemiIso,
+    si',
+    IsoparsecFail (..),
+    IsoparsecBase (..),
+    IsoparsecTry (..),
+    IsoparsecTokenable (..),
+    konst,
+    tsnok,
+  )
+where
 
-import Prelude hiding ((.), id)
-
-import Control.Category
+import Control.Arrow.Extra
 import Data.List.NonEmpty
 import Numeric.Natural
 import Optics.Iso
+import Prelude hiding ((.), id)
 
-import Control.Arrow.Extra
-import Control.Tuple.Morph
+class (PolyArrow m SemiIso') => IsoparsecBase t m where
 
-class (PolyArrow m SemiIso') => Isoparsec m t where
   {-# MINIMAL anyToken #-}
 
   anyToken :: m () t
 
-  token :: t -> m () ()
-  default token :: Eq t => t -> m () ()
-  token t = tokenWhere (== t) >>^ isoConst' t ()
-
   notToken :: t -> m () t
+
   default notToken :: Eq t => t -> m () t
   notToken t = tokenWhere (/= t)
 
   tokenWhere :: (t -> Bool) -> m () t
   tokenWhere f =
-    anyToken >>^ iso' (\t -> if f t then Just t else Nothing) Just
+    anyToken >>^ si' (\t -> if f t then Just t else Nothing) Just
 
-  tokens :: Natural -> m () [t]
-  tokens 0 = arr $ isoConst' () []
-  tokens n = anyToken &&& tokens (n-1) >>^ cons'
+  manyTokens :: Natural -> m () [t]
+  manyTokens 0 = arr $ isoConst' () []
+  manyTokens n = anyToken &&& manyTokens (n - 1) >>^ cons'
 
   tokensWhile :: (t -> Bool) -> m () [t]
+
   default tokensWhile :: (IsoparsecTry m, ArrowPlus m) => (t -> Bool) -> m () [t]
   tokensWhile f =
     try (tokenWhere f &&& tokensWhile f >>^ cons')
-    <+^ isoConst' () []
+      <+^ isoConst' () []
 
   tokensWhile1 :: (t -> Bool) -> m () (NonEmpty t)
+
   default tokensWhile1 :: (t -> Bool) -> m () (NonEmpty t)
   tokensWhile1 f = tokenWhere f &&& tokensWhile f >>^ consNE'
 
+class IsoparsecTokenable t m where
+
+  token :: t -> m () ()
+
+  tokens :: [t] -> m () ()
+
+  default tokens :: PolyArrow m SemiIso' => [t] -> m () ()
+  tokens [] = arr $ isoConst' () ()
+  tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst' ((), ()) ())
+
 cons' :: SemiIso' (t, [t]) [t]
-cons' = iso' (Just . uncurry (:)) (\case
-  (t:ts) -> Just (t, ts)
-  _ -> Nothing)
+cons' =
+  si'
+    (Just . uncurry (:))
+    ( \case
+        (t : ts) -> Just (t, ts)
+        _ -> Nothing
+    )
 
 consNE' :: SemiIso' (t, [t]) (NonEmpty t)
-consNE' = iso' (Just . uncurry (:|)) (\(t :| ts) -> Just (t, ts))
+consNE' = si' (Just . uncurry (:|)) (\(t :| ts) -> Just (t, ts))
 
 class IsoparsecTry m where
   try :: m a b -> m a b
@@ -64,32 +88,18 @@ class IsoparsecTry m where
 class IsoparsecFail m e where
   fail :: e -> m a b
 
-infixr 9 <.>
-(<.>)
-  :: (PolyArrow m SemiIso', TupleMorphable a c, TupleMorphable b c)
-  => m a' a
-  -> m b b'
-  -> m a' b'
-a <.> b = (a >>^ semi' morphed) >>> b
-
-morphed
-  :: (TupleMorphable a c, TupleMorphable b c)
-  => Iso' a b
-morphed = iso morphTuples morphTuples
-
 newtype SemiIso' s a = SemiIso' (SemiIso s s a a)
+
 type SemiIso s t a b = Iso s (Maybe t) (Maybe a) b
 
-iso' :: (s -> Maybe a) -> (a -> Maybe s) -> SemiIso' s a
-iso' n u = SemiIso' $ iso n u
+si' :: (s -> Maybe a) -> (a -> Maybe s) -> SemiIso' s a
+si' n u = SemiIso' $ iso n u
 
 isoConst' :: s -> a -> SemiIso' s a
-isoConst' s a = iso' (const $ Just a) (const $ Just s)
+isoConst' s a = si' (const $ Just a) (const $ Just s)
 
-semi :: Iso s t a b -> SemiIso s t a b
-semi i = iso (Just . f) (Just . g)
-  where
-    (f, g) = withIso i (,)
+konst :: PolyArrow a SemiIso' => x -> a () x
+konst x = arr $ si' (const $ Just x) (const $ Just ())
 
-semi' :: Iso' s a -> SemiIso' s a
-semi' = SemiIso' . semi
+tsnok :: PolyArrow a SemiIso' => x -> a x ()
+tsnok x = arr $ si' (const $ Just ()) (const $ Just x)

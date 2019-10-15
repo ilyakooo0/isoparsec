@@ -1,75 +1,73 @@
-{-# LANGUAGE
-  PolyKinds,
-  DataKinds,
-  TypeOperators,
-  GADTs,
-  FunctionalDependencies,
-  TypeFamilies,
-  FlexibleInstances,
-  UndecidableInstances,
-  PatternSynonyms,
-  RankNTypes,
-  AllowAmbiguousTypes,
-  TypeApplications,
-  ScopedTypeVariables,
-  ConstraintKinds,
-  FlexibleContexts
-  #-}
-
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns -Wno-redundant-constraints #-}
 
 module Control.Tuple.Morph
-  ( morphTuples
-  , morphReorderTuples
-  , morphPickTuples
-  , TupleMorphable
-  , CheckListsForTupleIso
-  , ReorderList
-  ) where
+  ( morphTuples,
+    morphReorderTuples,
+    morphPickTuples,
+    TupleMorphable,
+    CheckListsForTupleIso,
+    ReorderList,
+  )
+where
 
+import Data.Kind
 import Data.Proxy
 import GHC.Generics
 import GHC.TypeLits hiding (Nat)
-import Data.Kind
-
 
 morphTuples :: (TupleMorphable a c, TupleMorphable b c) => a -> b
 morphTuples = morph . unmorph
 
-morphPickTuples
-  ::  ( TupleMorphable a b
-    , TupleMorphable c d
-    , ReorderList b d )
-  => a
-  -> c
+morphPickTuples ::
+  ( TupleMorphable a b,
+    TupleMorphable c d,
+    ReorderList b d
+  ) =>
+  a ->
+  c
 morphPickTuples = morph . hReorder Proxy . unmorph
 
-type CheckListsForTupleIso b d
-  = EqOrError (Length b) (Length d)
-    ('Text "Not isomorphic tuple contents:"
-      ':$$: 'Text "    " ':<>: 'ShowType b
-      ':$$: 'Text "    " ':<>: 'ShowType d)
+type CheckListsForTupleIso b d =
+  EqOrError (Length b) (Length d)
+    ( 'Text "Not isomorphic tuple contents:"
+        ':$$: 'Text "    " ':<>: 'ShowType b
+        ':$$: 'Text "    " ':<>: 'ShowType d
+    )
 
-morphReorderTuples
-  ::  ( TupleMorphable a b
-    , TupleMorphable c d
-    , ReorderList b d
-    , CheckListsForTupleIso b d)
-  => a
-  -> c
+morphReorderTuples ::
+  ( TupleMorphable a b,
+    TupleMorphable c d,
+    ReorderList b d,
+    CheckListsForTupleIso b d
+  ) =>
+  a ->
+  c
 morphReorderTuples = morph . hReorder Proxy . unmorph
 
 type family EqOrError a b e :: Constraint where
   EqOrError a a _ = a ~ a
   EqOrError _ _ e = TypeError e
 
-
 -- # Nat
 
 data Nat where
   S :: Nat -> Nat
   Z :: Nat
-
 
 -- # HList
 
@@ -78,6 +76,7 @@ data HList (ts :: [*]) where
   HNil :: HList '[]
 
 infixr 5 :+
+
 pattern (:+) :: (ts ~ (t : tt)) => t -> HList tt -> HList ts
 pattern (:+) a b = HCons a b
 
@@ -89,8 +88,10 @@ class TakeableList (n :: Nat) aa bb | n aa -> bb where
 instance TakeableList 'Z a '[] where
   hTake _ _ = HNil
 
-instance (TakeableList n aa bb', bb ~ (a ': bb'))
-  => TakeableList ('S n) (a ': aa) bb where
+instance
+  (TakeableList n aa bb', bb ~ (a ': bb')) =>
+  TakeableList ('S n) (a ': aa) bb
+  where
   hTake (Proxy :: Proxy ('S n)) (a :+ aa) = a :+ hTake @n Proxy aa
 
 -- ## Dropping
@@ -107,6 +108,7 @@ instance (DroppableList n aa bb) => DroppableList ('S n) (a ': aa) bb where
 -- ## Appending
 
 infixr 4 ++:
+
 class AppendableList aa bb cc | aa bb -> cc where
   (++:) :: HList aa -> HList bb -> HList (aa ++ bb)
 
@@ -114,10 +116,12 @@ instance AppendableList '[] bb bb where
   HNil ++: bb = bb
 
 instance
-  ( AppendableList aa bb cc
-  , cc ~ (aa ++ bb)
-  , ((a ': aa) ++ bb) ~ (a ': cc))
-  => AppendableList (a ': aa) bb (a ': cc) where
+  ( AppendableList aa bb cc,
+    cc ~ (aa ++ bb),
+    ((a ': aa) ++ bb) ~ (a ': cc)
+  ) =>
+  AppendableList (a ': aa) bb (a ': cc)
+  where
   (a :+ aa) ++: bb = a :+ (aa ++: bb)
 
 -- ## Finding
@@ -125,28 +129,35 @@ instance
 class FindableList ts t where
   hFind :: HList ts -> t
 
-instance {-# OVERLAPPING #-}
-  (NotFindableList ts t)
-  => FindableList (t ': ts) t where
+instance
+  {-# OVERLAPPING #-}
+  (NotFindableList ts t) =>
+  FindableList (t ': ts) t
+  where
   hFind (t :+ _) = t
 
 instance
-  (TEq a t ~ 'False, FindableList ts a)
-  => FindableList (t ': ts) a where
+  (TEq a t ~ 'False, FindableList ts a) =>
+  FindableList (t ': ts) a
+  where
   hFind (_ :+ ts) = hFind ts
 
 instance
-  (TypeError
-    ('Text "Could not find type " ':<>: 'ShowType a ':<>: 'Text " in tuple."))
-  => FindableList '[] a where
+  ( TypeError
+      ('Text "Could not find type " ':<>: 'ShowType a ':<>: 'Text " in tuple.")
+  ) =>
+  FindableList '[] a
+  where
   hFind = error "oh no"
 
 class NotFindableList ts t
 
-instance {-# OVERLAPPING #-}
-  (TypeError
-    ('Text "Type " ':<>: 'ShowType t ':<>: 'Text " is not unique in tuple."))
-  => NotFindableList (t ': ts) t
+instance
+  {-# OVERLAPPING #-}
+  ( TypeError
+      ('Text "Type " ':<>: 'ShowType t ':<>: 'Text " is not unique in tuple.")
+  ) =>
+  NotFindableList (t ': ts) t
 
 instance (NotFindableList ts a) => NotFindableList (t ': ts) a
 
@@ -176,62 +187,83 @@ type family Length (aa :: [k]) :: Nat where
   Length '[] = 'Z
   Length (a ': aa) = 'S (Length aa)
 
-
 -- # Morphing
 
 class TupleMorphable t th | t -> th where
+
   unmorph :: t -> HList th
+
   morph :: HList th -> t
 
 instance (IsMophableTuple t ~ flag, TupleMorphable' t th flag) => TupleMorphable t th where
+
   unmorph = unmorph' (Proxy @flag)
+
   morph = morph' (Proxy @flag)
 
 -- ## Implementation
 
 class TupleMorphable' t th (flag :: Bool) | t flag -> th where
+
   unmorph' :: Proxy flag -> t -> HList th
+
   morph' :: Proxy flag -> HList th -> t
 
 instance TupleMorphable' t '[t] 'False where
+
   unmorph' _ t = t :+ HNil
+
   morph' _ (t :+ HNil) = t
 
 instance (GenericTupleMorphable (Rep t) th, Generic t) => TupleMorphable' t th 'True where
+
   unmorph' _ = genericUnmorph . from
+
   morph' _ = to . genericMorph
 
 -- ### Generics
 
 class GenericTupleMorphable f th | f -> th where
+
   genericUnmorph :: f p -> HList th
+
   genericMorph :: HList th -> f p
 
 instance (GenericTupleMorphable f t) => GenericTupleMorphable (M1 i c f) t where
+
   genericUnmorph = genericUnmorph . unM1
+
   genericMorph = M1 . genericMorph
 
 instance (TupleMorphable c t) => GenericTupleMorphable (K1 i c) t where
+
   genericUnmorph = unmorph . unK1
+
   genericMorph = K1 . morph
 
 instance GenericTupleMorphable U1 '[] where
+
   genericUnmorph _ = HNil
+
   genericMorph _ = U1
 
 type CanTakeDrop a b c =
-  ( TakeableList (Length a) c a
-  , DroppableList (Length a) c b
-  , c ~ (a ++ b)
+  ( TakeableList (Length a) c a,
+    DroppableList (Length a) c b,
+    c ~ (a ++ b)
   )
 
 instance
-  ( GenericTupleMorphable f a
-  , GenericTupleMorphable g b
-  , AppendableList a b c
-  , CanTakeDrop a b c)
-  => GenericTupleMorphable (f :*: g) c where
+  ( GenericTupleMorphable f a,
+    GenericTupleMorphable g b,
+    AppendableList a b c,
+    CanTakeDrop a b c
+  ) =>
+  GenericTupleMorphable (f :*: g) c
+  where
+
   genericUnmorph (a :*: b) = genericUnmorph a ++: genericUnmorph b
+
   genericMorph cc = genericMorph aa :*: genericMorph bb
     where
       aa = hTake @(Length a) Proxy cc
@@ -239,7 +271,7 @@ instance
 
 -- ## Other
 
-type family (IsMophableTuple t) :: Bool where
+type family IsMophableTuple t :: Bool where
   IsMophableTuple () = 'True
   IsMophableTuple (a, b) = 'True
   IsMophableTuple (a, b, c) = 'True

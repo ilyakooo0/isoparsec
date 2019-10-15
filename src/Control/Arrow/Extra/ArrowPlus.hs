@@ -1,13 +1,16 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances, MonoLocalBinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Control.Arrow.Extra.ArrowPlus
-  ( ArrowPlus(..)
-  ) where
+  ( ArrowPlus (..),
+  )
+where
 
-import qualified Control.Arrow                 as A
-import           Control.Arrow.Extra.ArrowZero
+import qualified Control.Arrow as A
+import Control.Arrow.Extra.ArrowZero
 
-infixr 5 <+>
+infixl 5 <+>
 
 class ArrowZero a => ArrowPlus a where
   (<+>) :: a b c -> a b c -> a b c
