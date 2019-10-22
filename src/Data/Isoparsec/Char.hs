@@ -27,6 +27,5 @@ whiteSpace1 = tokensWhile1 isSpace >>> tsnok (pure ' ')
 
 number :: Isoparsec m '[Char] '[String] => m () Integer
 number =
-  (try (token '+') <+> try (token '-') <+> konst ())
-    >>> tokensWhile1 isNumber
+  tokensWhile1 (\c -> isNumber c || c == '+' || c == '-')
     >>^ si' (readMaybe @Integer . NE.toList) (NE.nonEmpty . show)

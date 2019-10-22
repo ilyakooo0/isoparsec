@@ -1,8 +1,11 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
@@ -52,6 +55,11 @@ type family Isoparsec m (ats :: [*]) (ts :: [*]) where
       Isoparsec m ats ts
     )
 
+infix 0 <?>
+
+(<?>) :: IsoparsecLabel m l => m a b -> l -> m a b
+thing <?> msg = label msg thing
+
 infixl 1 %>>
 
 (%>>) :: (PolyArrow a SemiIso', ToSemiIso p b c) => p -> a c d -> a b d
@@ -96,11 +104,6 @@ infixl 5 %+%
 
 (%+%) :: (PolyArrow a SemiIso', ArrowPlus a, ToSemiIso p b c) => p -> p -> a b c
 a %+% b = si a ^+^ si b
-
-infixl 6 <?>
-
-(<?>) :: (IsoparsecFail m e, ArrowPlus m) => m a b -> e -> m a b
-m <?> e = m <+> fail e
 
 infixr 0 <.>
 

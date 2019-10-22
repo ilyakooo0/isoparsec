@@ -87,3 +87,6 @@ instance
 
 instance MonadParsec e s m => IsoparsecFail (Kleisli m) e where
   fail e = Kleisli $ \_ -> fancyFailure . S.singleton . ErrorCustom $ e
+
+instance MonadParsec e s m => IsoparsecLabel (Kleisli m) String where
+  label s (Kleisli m) = Kleisli $ \x -> M.label s (m x)

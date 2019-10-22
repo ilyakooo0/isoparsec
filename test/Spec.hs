@@ -8,6 +8,7 @@ main = do
   defaultMain
     ( testGroup
         "tests"
-        [ spec
+        [ spec,
+          BasicNums.quickSpec
         ]
     )

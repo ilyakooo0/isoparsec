@@ -29,7 +29,7 @@ class BaseArrow a => ArrowChoice a where
 
   (|||) :: a b d -> a c d -> a (Either b c) d
 
-instance A.ArrowChoice a => ArrowChoice a where
+instance {-# OVERLAPPABLE #-} A.ArrowChoice a => ArrowChoice a where
 
   left = A.left
 

@@ -28,7 +28,7 @@ class Category a => BaseArrow a where
 
   (&&&) :: a b c -> a b c' -> a b (c, c')
 
-instance (Category a, A.Arrow a) => BaseArrow a where
+instance {-# OVERLAPPABLE #-} (Category a, A.Arrow a) => BaseArrow a where
 
   first = A.first
 

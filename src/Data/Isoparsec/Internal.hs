@@ -18,6 +18,7 @@ module Data.Isoparsec.Internal
     IsoparsecBase (..),
     IsoparsecTry (..),
     IsoparsecTokenable (..),
+    IsoparsecLabel (..),
     konst,
     tsnok,
   )
@@ -59,6 +60,9 @@ class (PolyArrow m SemiIso') => IsoparsecBase t m where
 
   default tokensWhile1 :: (t -> Bool) -> m () (NonEmpty t)
   tokensWhile1 f = tokenWhere f &&& tokensWhile f >>^ consNE'
+
+class IsoparsecLabel m l where
+  label :: l -> m a b -> m a b
 
 class IsoparsecTokenable t m where
 

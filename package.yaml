@@ -31,6 +31,7 @@ library:
   - containers
   - bytestring
   - text
+  - mtl
 
 
 executables:
@@ -57,3 +58,6 @@ tests:
     - tasty-hspec
     - hspec
     - optics
+    - tasty-quickcheck
+    - QuickCheck
+    - megaparsec

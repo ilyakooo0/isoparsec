@@ -13,5 +13,5 @@ import Control.Arrow.Extra.BaseArrow
 class BaseArrow a => ArrowZero a where
   zeroArrow :: a b c
 
-instance A.ArrowZero a => ArrowZero a where
+instance {-# OVERLAPPABLE #-} A.ArrowZero a => ArrowZero a where
   zeroArrow = A.zeroArrow
