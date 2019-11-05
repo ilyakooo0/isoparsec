@@ -1,24 +1,17 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Isoparsec.Printer.String
   (
   )
 where
 
-import Control.Monad.Fail as MF
 import Control.Monad.Writer.Lazy
 import Data.Isoparsec.Cokleisli
 import Data.Isoparsec.Internal
 
-runStringPrinter ::
-  MonadFail m =>
-  Cokleisli (WriterT String m) () a ->
-  a ->
-  m String
-runStringPrinter p a = execWriterT $ unCokleisli p a
-
-instance MonadPlus m => IsoparsecTry (Cokleisli (WriterT (Dual String) m)) where
+instance IsoparsecTry (Cokleisli (WriterT (Dual String) m)) where
   try = id
 
 instance MonadPlus m => IsoparsecBase Char (Cokleisli (WriterT (Dual String) m)) where

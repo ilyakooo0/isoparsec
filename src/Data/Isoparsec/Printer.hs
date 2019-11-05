@@ -1,5 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -Wno-dodgy-exports #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Isoparsec.Printer
   ( module X,
@@ -10,8 +12,7 @@ where
 import Control.Monad.Writer.Lazy
 import Data.Isoparsec.Cokleisli
 import Data.Isoparsec.Internal
-import Data.Isoparsec.Printer.String as X
-import Data.Monoid
+import Data.Isoparsec.Printer.String as X ()
 
 runPrinter ::
   Monad m =>
