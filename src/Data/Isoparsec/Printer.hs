@@ -1,15 +1,17 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Isoparsec.Printer
-  ( runPrinter,
+  ( module X,
+    runPrinter,
   )
 where
 
 import Control.Monad.Writer.Lazy
 import Data.Isoparsec.Cokleisli
 import Data.Isoparsec.Internal
+import Data.Isoparsec.Printer.String as X
+import Data.Monoid
 
 runPrinter ::
   Monad m =>
