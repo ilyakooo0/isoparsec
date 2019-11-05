@@ -61,4 +61,3 @@ tests:
     - tasty-quickcheck
     - QuickCheck
     - megaparsec
-    - containers
