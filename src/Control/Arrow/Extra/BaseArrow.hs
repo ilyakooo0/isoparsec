@@ -7,7 +7,6 @@ module Control.Arrow.Extra.BaseArrow
   )
 where
 
-import qualified Control.Arrow as A
 import Control.Category
 
 infixl 3 ***
@@ -27,13 +26,3 @@ class Category a => BaseArrow a where
   (***) :: a b c -> a b' c' -> a (b, b') (c, c')
 
   (&&&) :: a b c -> a b c' -> a b (c, c')
-
-instance {-# OVERLAPPABLE #-} (Category a, A.Arrow a) => BaseArrow a where
-
-  first = A.first
-
-  second = A.second
-
-  (***) = (A.***)
-
-  (&&&) = (A.&&&)

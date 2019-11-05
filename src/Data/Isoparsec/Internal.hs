@@ -21,6 +21,8 @@ module Data.Isoparsec.Internal
     IsoparsecLabel (..),
     konst,
     tsnok,
+    cons',
+    consNE',
   )
 where
 

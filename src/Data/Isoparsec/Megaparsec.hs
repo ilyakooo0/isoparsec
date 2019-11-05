@@ -13,6 +13,7 @@ module Data.Isoparsec.Megaparsec
 where
 
 import Control.Arrow.Extra
+import Control.Arrow.Extra.Orphans ()
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Data.Functor

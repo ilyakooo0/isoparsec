@@ -5,7 +5,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
@@ -24,12 +23,17 @@ module Data.Isoparsec
     (%+>),
     (%+%),
     (<.>),
+    repeating,
+    repeating1,
+    opt,
+    morphed,
   )
 where
 
 import Control.Arrow.Extra as X
 import Control.Tuple.Morph
 import Data.Isoparsec.Internal as X
+import Data.List.NonEmpty (NonEmpty)
 import Optics.Iso
 import Optics.Optic
 import Optics.Prism
@@ -54,6 +58,15 @@ type family Isoparsec m (ats :: [*]) (ts :: [*]) where
       IsoparsecTokenable at m,
       Isoparsec m ats ts
     )
+
+opt :: (ArrowPlus m, IsoparsecTry m, PolyArrow m SemiIso') => m () () -> m () ()
+opt m = try m <+> konst ()
+
+repeating :: (PolyArrow m SemiIso', IsoparsecTry m, ArrowPlus m) => m () b -> m () [b]
+repeating m = (try m &&& (try (repeating m) <+> konst [])) >>^ cons'
+
+repeating1 :: (PolyArrow m SemiIso', IsoparsecTry m, ArrowPlus m) => m () b -> m () (NonEmpty b)
+repeating1 m = (m &&& repeating m) >>^ consNE'
 
 infix 0 <?>
 
@@ -112,7 +125,7 @@ infixr 0 <.>
   b ->
   m x' x ->
   m x' y'
-b <.> p = (p >>% morphed) >>^ si b
+b <.> p = (p >>% morphed) >>% b
 
 morphed ::
   (TupleMorphable a c, TupleMorphable b c) =>

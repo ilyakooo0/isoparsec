@@ -18,7 +18,7 @@ runPrinter ::
   Cokleisli (WriterT (Dual s) m) () a ->
   a ->
   m s
-runPrinter p a = fmap getDual . execWriterT $ unCokleisli p a
+runPrinter p = fmap getDual . execWriterT . unCokleisli p
 
 instance IsoparsecFail (Cokleisli (WriterT s Maybe)) e where
   fail _ = Cokleisli . const $ WriterT Nothing

@@ -13,21 +13,17 @@ module Control.Arrow.Extra.PolyArrow
   )
 where
 
-import qualified Control.Arrow as A
 import Control.Arrow.Extra.BaseArrow
 import Control.Category
 
-infixr 1 ^>>, >>^
+infixl 1 ^>>, >>^
 
-infixr 1 ^<<, <<^
+infixl 1 ^<<, <<^
 
-infixr 1 ^>^, ^<^
+infixl 1 ^>^, ^<^
 
 class BaseArrow a => PolyArrow a p where
   arr :: p b c -> a b c
-
-instance A.Arrow a => PolyArrow a (->) where
-  arr = A.arr
 
 (^>>) :: PolyArrow a p => p b c -> a c d -> a b d
 f ^>> a = arr f >>> a

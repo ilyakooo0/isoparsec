@@ -8,7 +8,6 @@ module Control.Arrow.Extra.ArrowChoice
   )
 where
 
-import qualified Control.Arrow as A
 import Control.Arrow.Extra.BaseArrow
 import Control.Category
 import Data.Either
@@ -28,13 +27,3 @@ class BaseArrow a => ArrowChoice a where
   (+++) :: a b c -> a b' c' -> a (Either b b') (Either c c')
 
   (|||) :: a b d -> a c d -> a (Either b c) d
-
-instance {-# OVERLAPPABLE #-} A.ArrowChoice a => ArrowChoice a where
-
-  left = A.left
-
-  right = A.right
-
-  (+++) = (A.+++)
-
-  (|||) = (A.|||)
