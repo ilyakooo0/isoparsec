@@ -3,10 +3,11 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LiberalTypeSynonyms #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -15,9 +16,8 @@ module Data.Isoparsec.Internal
     SemiIso,
     si',
     IsoparsecFail (..),
-    IsoparsecBase (..),
+    Isoparsec (..),
     IsoparsecTry (..),
-    IsoparsecTokenable (..),
     IsoparsecLabel (..),
     konst,
     tsnok,
@@ -32,18 +32,30 @@ import Numeric.Natural
 import Optics.Iso
 import Prelude hiding ((.), id)
 
-class (PolyArrow m SemiIso') => IsoparsecBase t m where
+class
+  (PolyArrow m SemiIso', ArrowPlus m, ArrowChoice m, IsoparsecTry m) =>
+  Isoparsec m s t
+    | m -> s,
+      m s -> t where
 
-  {-# MINIMAL anyToken #-}
+  -- {-# MINIMAL anyToken #-}
 
-  anyToken :: m () t
+  anyToken :: m () (t)
 
-  notToken :: t -> m () t
+  token :: t -> m () ()
 
-  default notToken :: Eq t => t -> m () t
+  default tokens :: [t] -> m () ()
+  tokens [] = arr $ isoConst' () ()
+  tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst' ((), ()) ())
+
+  tokens :: [t] -> m () ()
+
+  notToken :: t -> m () (t)
+
+  default notToken :: Eq (t) => t -> m () (t)
   notToken t = tokenWhere (/= t)
 
-  tokenWhere :: (t -> Bool) -> m () t
+  tokenWhere :: (t -> Bool) -> m () (t)
   tokenWhere f =
     anyToken >>^ si' (\t -> if f t then Just t else Nothing) Just
 
@@ -53,28 +65,18 @@ class (PolyArrow m SemiIso') => IsoparsecBase t m where
 
   tokensWhile :: (t -> Bool) -> m () [t]
 
-  default tokensWhile :: (IsoparsecTry m, ArrowPlus m) => (t -> Bool) -> m () [t]
+  default tokensWhile :: (t -> Bool) -> m () [t]
   tokensWhile f =
     try (tokenWhere f &&& tokensWhile f >>^ cons')
       <+^ isoConst' () []
 
-  tokensWhile1 :: (t -> Bool) -> m () (NonEmpty t)
+  tokensWhile1 :: (t -> Bool) -> m () (NonEmpty (t))
 
-  default tokensWhile1 :: (t -> Bool) -> m () (NonEmpty t)
+  default tokensWhile1 :: (t -> Bool) -> m () (NonEmpty (t))
   tokensWhile1 f = tokenWhere f &&& tokensWhile f >>^ consNE'
 
 class IsoparsecLabel m l where
   label :: l -> m a b -> m a b
-
-class IsoparsecTokenable t m where
-
-  token :: t -> m () ()
-
-  tokens :: [t] -> m () ()
-
-  default tokens :: PolyArrow m SemiIso' => [t] -> m () ()
-  tokens [] = arr $ isoConst' () ()
-  tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst' ((), ()) ())
 
 cons' :: SemiIso' (t, [t]) [t]
 cons' =

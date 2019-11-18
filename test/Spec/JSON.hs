@@ -60,7 +60,7 @@ quickSpec =
           Right y -> property $ x == y
           Left err -> counterexample (errorBundlePretty err) False
 
-json :: (PolyArrow m SemiIso', Isoparsec m '[Char] '[String]) => m () JSON
+json :: (PolyArrow m SemiIso', Isoparsec m String Char) => m () JSON
 json = si' Just Just ^<< (try string <+> try array <+> try integer <+> object)
   where
     string' = token '"' &&& tokensWhile (/= '"') &&& token '"'

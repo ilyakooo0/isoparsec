@@ -1,6 +1,9 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Data.Isoparsec.Char
   ( whiteSpace,
@@ -16,16 +19,16 @@ import qualified Data.List.NonEmpty as NE
 import Text.Read
 import Prelude hiding ((.), id)
 
-space :: Isoparsec m '[Char] '[] => m () ()
+space :: (Isoparsec m s Char) => m () ()
 space = token ' '
 
-whiteSpace :: Isoparsec m '[Char] '[] => m () ()
+whiteSpace :: (Isoparsec m s Char) => m () ()
 whiteSpace = tokensWhile isSpace >>> tsnok []
 
-whiteSpace1 :: Isoparsec m '[Char] '[] => m () ()
+whiteSpace1 :: (Isoparsec m s Char) => m () ()
 whiteSpace1 = tokensWhile1 isSpace >>> tsnok (pure ' ')
 
-number :: Isoparsec m '[Char] '[String] => m () Integer
+number :: (Isoparsec m s Char) => m () Integer
 number =
   tokensWhile1 (\c -> isNumber c || c == '+' || c == '-')
     >>^ si' (readMaybe @Integer . NE.toList) (NE.nonEmpty . show)

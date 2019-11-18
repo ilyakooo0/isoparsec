@@ -11,7 +11,7 @@
 
 module Data.Isoparsec
   ( module X,
-    Isoparsec,
+    -- Isoparsec,
     (%>>),
     (%>%),
     (>>%),
@@ -38,26 +38,6 @@ import Optics.Iso
 import Optics.Optic
 import Optics.Prism
 import Prelude hiding ((.), fail, id)
-
--- | 'm' -- the arrow
--- | 'ats' -- atomic tokens like 'Char'
--- | 'ts' -- the types of tokens the parser should accept in `token`
-type family Isoparsec m (ats :: [*]) (ts :: [*]) where
-  Isoparsec m '[] '[] =
-    ( IsoparsecTry m,
-      ArrowPlus m,
-      ArrowChoice m,
-      PolyArrow m SemiIso'
-    )
-  Isoparsec m '[] (t ': ts) =
-    ( IsoparsecTokenable t m,
-      Isoparsec m '[] ts
-    )
-  Isoparsec m (at ': ats) ts =
-    ( IsoparsecBase at m,
-      IsoparsecTokenable at m,
-      Isoparsec m ats ts
-    )
 
 opt :: (ArrowPlus m, IsoparsecTry m, PolyArrow m SemiIso') => m () () -> m () ()
 opt m = try m <+> konst ()
