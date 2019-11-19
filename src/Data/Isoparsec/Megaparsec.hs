@@ -16,6 +16,7 @@ import Control.Arrow.Extra
 import Control.Arrow.Extra.Orphans ()
 import Data.Functor
 import Data.Isoparsec.Internal
+import Data.Isoparsec.Tokenable
 import qualified Data.Set as S
 import Optics.Getter
 import Optics.ReadOnly
@@ -23,8 +24,12 @@ import Text.Megaparsec hiding (Token)
 import qualified Text.Megaparsec as M
 import Prelude hiding ((.))
 
-runMegaparsec :: Kleisli (Parsec e s) () r -> s -> Either (ParseErrorBundle s e) r
-runMegaparsec (Kleisli f) = runParser (f ()) ""
+runMegaparsec ::
+  (Ord e, Stream s) =>
+  Kleisli (Parsec e s) () r ->
+  s ->
+  Either (ParseErrorBundle s e) r
+runMegaparsec (Kleisli f) = runParser (f () <* eof) ""
 
 instance (MonadParsec e s m) => IsoparsecTry (Kleisli m) where
   try (Kleisli f) = Kleisli $ \a -> M.try (f a)
@@ -35,8 +40,8 @@ instance (MonadParsec e s m) => PolyArrow (Kleisli m) SemiIso' where
     Nothing -> failure Nothing mempty
 
 instance
-  (MonadParsec e s m, M.Token s ~ t) =>
-  Isoparsec (Kleisli m) s t
+  (MonadParsec e s m, M.Token s ~ Token s, Tokenable s) =>
+  Isoparsec (Kleisli m) s
   where
 
   anyToken = Kleisli $ \() -> anySingle

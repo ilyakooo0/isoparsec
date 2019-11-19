@@ -1,18 +1,18 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# OPTIONS_GHC -Wno-dodgy-exports #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Isoparsec.Printer
-  ( module X,
-    runPrinter,
+  ( runPrinter,
   )
 where
 
 import Control.Monad.Writer.Lazy
+import Data.Isoparsec
 import Data.Isoparsec.Cokleisli
-import Data.Isoparsec.Internal
-import Data.Isoparsec.Printer.String as X ()
+import Prelude hiding ((.), id)
 
 runPrinter ::
   Monad m =>
@@ -32,3 +32,15 @@ instance IsoparsecLabel (Cokleisli (WriterT s Maybe)) e where
 
 instance IsoparsecLabel (Cokleisli (WriterT s (Either e))) y where
   label _ = id
+
+instance IsoparsecTry (Cokleisli (WriterT (Dual s) m)) where
+  try = id
+
+instance
+  (MonadPlus m, Monoid s, Eq (Token s), Tokenable s) =>
+  Isoparsec (Cokleisli (WriterT (Dual s) m)) s
+  where
+
+  token t = Cokleisli $ const $ tell . Dual . liftToken $ t
+
+  anyToken = Cokleisli $ tell . Dual . liftToken

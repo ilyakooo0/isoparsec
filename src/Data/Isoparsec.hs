@@ -23,6 +23,7 @@ module Data.Isoparsec
     (%+>),
     (%+%),
     (<.>),
+    (<^>),
     repeating,
     repeating1,
     opt,
@@ -33,6 +34,8 @@ where
 import Control.Arrow.Extra as X
 import Control.Tuple.Morph
 import Data.Isoparsec.Internal as X
+import Data.Isoparsec.ToIsoparsec as X
+import Data.Isoparsec.Tokenable as X
 import Data.List.NonEmpty (NonEmpty)
 import Optics.Iso
 import Optics.Optic
@@ -53,47 +56,47 @@ infix 0 <?>
 (<?>) :: IsoparsecLabel m l => m a b -> l -> m a b
 thing <?> msg = label msg thing
 
-infixl 1 %>>
+infixr 1 %>>
 
 (%>>) :: (PolyArrow a SemiIso', ToSemiIso p b c) => p -> a c d -> a b d
 p %>> a = si p ^>> a
 
-infixl 1 %>%
+infixr 1 %>%
 
 (%>%) :: (PolyArrow a SemiIso', ToSemiIso p b c, ToSemiIso p' c d) => p -> p' -> a b d
 p %>% a = si p ^>^ si a
 
-infixl 1 >>%
+infixr 1 >>%
 
 (>>%) :: (PolyArrow a SemiIso', ToSemiIso p c d) => a b c -> p -> a b d
 p >>% a = p >>^ si a
 
-infixl 1 %<<
+infixr 1 %<<
 
 (%<<) :: (PolyArrow a SemiIso', ToSemiIso p c d) => p -> a b c -> a b d
 p %<< a = si p ^<< a
 
-infixl 1 %<%
+infixr 1 %<%
 
 (%<%) :: (PolyArrow a SemiIso', ToSemiIso p c d, ToSemiIso p' b c) => p -> p' -> a b d
 p %<% a = si p ^<^ si a
 
-infixl 1 <<%
+infixr 1 <<%
 
 (<<%) :: (PolyArrow a SemiIso', ToSemiIso p b c) => a c d -> p -> a b d
 p <<% a = p <<^ si a
 
-infixl 5 <+%
+infixr 5 <+%
 
 (<+%) :: (PolyArrow a SemiIso', ArrowPlus a, ToSemiIso p b c) => a b c -> p -> a b c
 a <+% b = a <+^ si b
 
-infixl 5 %+>
+infixr 5 %+>
 
 (%+>) :: (PolyArrow a SemiIso', ArrowPlus a, ToSemiIso p b c) => p -> a b c -> a b c
 a %+> b = si a ^+> b
 
-infixl 5 %+%
+infixr 5 %+%
 
 (%+%) :: (PolyArrow a SemiIso', ArrowPlus a, ToSemiIso p b c) => p -> p -> a b c
 a %+% b = si a ^+^ si b
@@ -106,6 +109,15 @@ infixr 0 <.>
   m x' x ->
   m x' y'
 b <.> p = (p >>% morphed) >>% b
+
+infixr 0 <^>
+
+(<^>) ::
+  (PolyArrow m SemiIso', TupleMorphable x c, TupleMorphable y c, ToSemiIso b y y') =>
+  m x' x ->
+  b ->
+  m x' y'
+b <^> p = b >>> morphed %>% p
 
 morphed ::
   (TupleMorphable a c, TupleMorphable b c) =>

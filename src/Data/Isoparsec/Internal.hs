@@ -23,56 +23,61 @@ module Data.Isoparsec.Internal
     tsnok,
     cons',
     consNE',
+    siJust,
+    siCheck,
+    siCheck',
+    check,
   )
 where
 
 import Control.Arrow.Extra
+import Control.Monad
+import Data.Isoparsec.Tokenable
 import Data.List.NonEmpty
 import Numeric.Natural
 import Optics.Iso
 import Prelude hiding ((.), id)
 
 class
-  (PolyArrow m SemiIso', ArrowPlus m, ArrowChoice m, IsoparsecTry m) =>
-  Isoparsec m s t
-    | m -> s,
-      m s -> t where
+  (PolyArrow m SemiIso', ArrowPlus m, ArrowChoice m, IsoparsecTry m, Tokenable s) =>
+  Isoparsec m s
+    | m -> s where
 
   -- {-# MINIMAL anyToken #-}
 
-  anyToken :: m () (t)
+  anyToken :: m () (Token s)
 
-  token :: t -> m () ()
+  token :: Token s -> m () ()
 
-  default tokens :: [t] -> m () ()
+  default tokens :: [Token s] -> m () ()
   tokens [] = arr $ isoConst' () ()
   tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst' ((), ()) ())
 
-  tokens :: [t] -> m () ()
+  tokens :: [Token s] -> m () ()
 
-  notToken :: t -> m () (t)
+  notToken :: Token s -> m () (Token s)
 
-  default notToken :: Eq (t) => t -> m () (t)
+  default notToken :: Eq (Token s) => Token s -> m () (Token s)
   notToken t = tokenWhere (/= t)
 
-  tokenWhere :: (t -> Bool) -> m () (t)
+  tokenWhere :: (Token s -> Bool) -> m () (Token s)
   tokenWhere f =
     anyToken >>^ si' (\t -> if f t then Just t else Nothing) Just
 
-  manyTokens :: Natural -> m () [t]
+  manyTokens :: Natural -> m () [Token s]
   manyTokens 0 = arr $ isoConst' () []
   manyTokens n = anyToken &&& manyTokens (n - 1) >>^ cons'
 
-  tokensWhile :: (t -> Bool) -> m () [t]
+  tokensWhile :: (Token s -> Bool) -> m () [Token s]
 
-  default tokensWhile :: (t -> Bool) -> m () [t]
+  default tokensWhile :: (Token s -> Bool) -> m () [Token s]
   tokensWhile f =
     try (tokenWhere f &&& tokensWhile f >>^ cons')
       <+^ isoConst' () []
 
-  tokensWhile1 :: (t -> Bool) -> m () (NonEmpty (t))
+  tokensWhile1 :: (Token s -> Bool) -> m () (NonEmpty (Token s))
 
-  default tokensWhile1 :: (t -> Bool) -> m () (NonEmpty (t))
+  default tokensWhile1 :: (Token s -> Bool) -> m () (NonEmpty (Token s))
   tokensWhile1 f = tokenWhere f &&& tokensWhile f >>^ consNE'
 
 class IsoparsecLabel m l where
@@ -103,6 +108,18 @@ type SemiIso s t a b = Iso s (Maybe t) (Maybe a) b
 si' :: (s -> Maybe a) -> (a -> Maybe s) -> SemiIso' s a
 si' n u = SemiIso' $ iso n u
 
+siCheck' :: (s -> Bool) -> (s -> Maybe a) -> (a -> Maybe s) -> SemiIso' s a
+siCheck' f a b =
+  si'
+    (\c -> guard (f c) >> a c)
+    (b >=> (\c -> guard (f c) >> pure c))
+
+siCheck :: (s -> Bool) -> (s -> a) -> (a -> s) -> SemiIso' s a
+siCheck f a b = siCheck' f (Just . a) (Just . b)
+
+siJust :: (s -> a) -> (a -> s) -> SemiIso' s a
+siJust a b = si' (Just . a) (Just . b)
+
 isoConst' :: s -> a -> SemiIso' s a
 isoConst' s a = si' (const $ Just a) (const $ Just s)
 
@@ -111,3 +128,6 @@ konst x = arr $ si' (const $ Just x) (const $ Just ())
 
 tsnok :: PolyArrow a SemiIso' => x -> a x ()
 tsnok x = arr $ si' (const $ Just ()) (const $ Just x)
+
+check :: PolyArrow a SemiIso' => (s -> Bool) -> a s s
+check f = arr $ siCheck f id id
