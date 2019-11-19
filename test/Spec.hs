@@ -16,10 +16,10 @@ main = do
             [ bsicNumSpec,
               BasicNums.quickSpec
             ],
-          -- testGroup
-          --   "JSON"
-          --   [ JSON.quickSpec
-          --   ],
+          testGroup
+            "JSON"
+            [ JSON.quickSpec
+            ],
           testGroup
             "TwoDigits"
             [ twoDigitsSpec,

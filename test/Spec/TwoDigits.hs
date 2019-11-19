@@ -1,6 +1,11 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -17,30 +22,30 @@ where
 import Data.Char
 import Data.Either
 import Data.Isoparsec
+import Data.Isoparsec.Chunks
 import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
-import Data.Proxy
 import Data.Void
 import GHC.Generics
-import Optics hiding (elements)
 import Test.Hspec
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Text.Megaparsec.Error
 import Prelude hiding ((.))
 
-newtype SingleDigit = SingleDigit {unSingleDigit :: Char}
-  deriving (Eq, Show)
+newtype SingleDigit = SingleDigit {unSingleDigit :: String}
+  deriving (Eq, Show, Generic)
 
-instance Arbitrary SingleDigit where
-  arbitrary = SingleDigit <$> elements ['0' .. '9']
+instance ToIsoparsec SingleDigit String where
+  toIsoparsec =
+    toIsoparsec @(Chunk 1 String)
+      >>> coercing
+      >>> check (all @[] isDigit)
+      >>> coercing
 
-makePrisms ''SingleDigit
-
-instance (Token s ~ Char) => ToIsoparsec s SingleDigit where
-  toIsoparsec _ =
-    anyToken >>> check isDigit >>% _SingleDigit
+instance (Arbitrary SingleDigit) where
+  arbitrary = SingleDigit . pure <$> elements ['0' .. '9']
 
 data Digits
   = FourDigits SingleDigit SingleDigit SingleDigit SingleDigit
@@ -56,15 +61,15 @@ instance Arbitrary Digits where
         TwoDigits <$> arbitrary <*> arbitrary
       ]
 
-instance Token s ~ Char => ToIsoparsec s Digits
+instance ToIsoparsec Digits String
 
 spec :: Spec
 spec = do
-  let parser = toIsoparsec Proxy
+  let parser = toIsoparsec
   it "deserializes" $ do
-    runMegaparsec @() parser "12" `shouldBe` Right (TwoDigits (SingleDigit '1') (SingleDigit '2'))
-    runMegaparsec @() parser "125" `shouldBe` Right (ThreeDigits (SingleDigit '1') (SingleDigit '2') (SingleDigit '5'))
-    runMegaparsec @() parser "1253" `shouldBe` Right (FourDigits (SingleDigit '1') (SingleDigit '2') (SingleDigit '5') (SingleDigit '3'))
+    runMegaparsec @() parser "12" `shouldBe` Right (TwoDigits (SingleDigit "1") (SingleDigit "2"))
+    runMegaparsec @() parser "125" `shouldBe` Right (ThreeDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5"))
+    runMegaparsec @() parser "1253" `shouldBe` Right (FourDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5") (SingleDigit "3"))
     runMegaparsec @() parser "12538" `shouldSatisfy` isLeft
     runMegaparsec @() parser "2" `shouldSatisfy` isLeft
     runMegaparsec @() parser "a" `shouldSatisfy` isLeft
@@ -77,5 +82,5 @@ quickSpec = testProperty "roundtrips" $ \x ->
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False
   where
-    parser :: (Isoparsec m s, Token s ~ Char) => m () Digits
-    parser = toIsoparsec Proxy
+    parser :: Isoparsec m String => m () Digits
+    parser = toIsoparsec

@@ -22,38 +22,40 @@ module Data.Isoparsec.Internal
     konst,
     tsnok,
     cons',
-    consNE',
     siJust,
     siCheck,
     siCheck',
     check,
+    levitate,
   )
 where
 
 import Control.Arrow.Extra
 import Control.Monad
 import Data.Isoparsec.Tokenable
-import Data.List.NonEmpty
 import Numeric.Natural
 import Optics.Iso
-import Prelude hiding ((.), id)
+import Prelude as P hiding ((.), id)
 
 class
   (PolyArrow m SemiIso', ArrowPlus m, ArrowChoice m, IsoparsecTry m, Tokenable s) =>
   Isoparsec m s
     | m -> s where
 
-  -- {-# MINIMAL anyToken #-}
+  -- {-# MINIMAL anyToken, chunk #-}
 
   anyToken :: m () (Token s)
 
   token :: Token s -> m () ()
 
+  tokens :: [Token s] -> m () ()
+
   default tokens :: [Token s] -> m () ()
   tokens [] = arr $ isoConst' () ()
   tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst' ((), ()) ())
 
-  tokens :: [Token s] -> m () ()
+  chunk :: s -> m () ()
+  chunk = tokens . lowerTokens
 
   notToken :: Token s -> m () (Token s)
 
@@ -62,26 +64,37 @@ class
 
   tokenWhere :: (Token s -> Bool) -> m () (Token s)
   tokenWhere f =
-    anyToken >>^ si' (\t -> if f t then Just t else Nothing) Just
+    anyToken >>> check f
 
-  manyTokens :: Natural -> m () [Token s]
-  manyTokens 0 = arr $ isoConst' () []
-  manyTokens n = anyToken &&& manyTokens (n - 1) >>^ cons'
+  manyTokens :: Natural -> m () s
+  manyTokens n =
+    manyTokens' n >>> check ((== n) . fromIntegral . P.length) >>^ levitate
+    where
+      manyTokens' 0 = arr $ isoConst' () []
+      manyTokens' m = anyToken &&& manyTokens' (m - 1) >>^ cons'
 
-  tokensWhile :: (Token s -> Bool) -> m () [Token s]
+  tokensWhile :: (Token s -> Bool) -> m () s
 
-  default tokensWhile :: (Token s -> Bool) -> m () [Token s]
+  default tokensWhile :: (Token s -> Bool) -> m () s
   tokensWhile f =
-    try (tokenWhere f &&& tokensWhile f >>^ cons')
-      <+^ isoConst' () []
+    tokensWhile' f >>> check (P.all f) >>^ levitate
+    where
+      tokensWhile' g =
+        try (tokenWhere g &&& tokensWhile' g >>^ cons')
+          <+^ isoConst' () []
 
-  tokensWhile1 :: (Token s -> Bool) -> m () (NonEmpty (Token s))
-
-  default tokensWhile1 :: (Token s -> Bool) -> m () (NonEmpty (Token s))
-  tokensWhile1 f = tokenWhere f &&& tokensWhile f >>^ consNE'
+  tokensWhile1 :: (Token s -> Bool) -> m () s
+  tokensWhile1 f =
+    tokenWhere f &&& tokensWhile f
+      >>^ si' (\(a, aa) -> Just $ liftToken a <> aa) levitateHead
 
 class IsoparsecLabel m l where
   label :: l -> m a b -> m a b
+
+levitateHead :: Tokenable s => s -> Maybe (Token s, s)
+levitateHead s = case lowerTokens s of
+  (t : tt) -> Just (t, liftTokens tt)
+  [] -> Nothing
 
 cons' :: SemiIso' (t, [t]) [t]
 cons' =
@@ -92,8 +105,8 @@ cons' =
         _ -> Nothing
     )
 
-consNE' :: SemiIso' (t, [t]) (NonEmpty t)
-consNE' = si' (Just . uncurry (:|)) (\(t :| ts) -> Just (t, ts))
+levitate :: Tokenable s => SemiIso' [Token s] s
+levitate = siJust liftTokens lowerTokens
 
 class IsoparsecTry m where
   try :: m a b -> m a b

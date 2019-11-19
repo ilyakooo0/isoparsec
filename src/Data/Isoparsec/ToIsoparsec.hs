@@ -15,40 +15,39 @@ where
 
 import Control.Arrow.Extra
 import Data.Isoparsec.Internal
-import Data.Proxy
 import GHC.Generics
 import Prelude hiding ((.))
 
-class ToIsoparsec s a where
+class ToIsoparsec a s where
 
-  toIsoparsec :: Isoparsec m s => Proxy a -> m () a
+  toIsoparsec :: Isoparsec m s => m () a
 
-  default toIsoparsec :: (Isoparsec m s, Generic a, GToIsoparsec s (Rep a)) => Proxy a -> m () a
-  toIsoparsec (Proxy :: Proxy a) = gToIsoparsec (Proxy @(Rep a)) >>^ si' (Just . to) (Just . from)
+  default toIsoparsec :: (Isoparsec m s, Generic a, GToIsoparsec (Rep a) s) => m () a
+  toIsoparsec = gToIsoparsec >>^ si' (Just . to) (Just . from)
 
-class GToIsoparsec s a where
-  gToIsoparsec :: Isoparsec m s => Proxy a -> m () (a b)
+class GToIsoparsec a s where
+  gToIsoparsec :: Isoparsec m s => m () (a b)
 
-instance GToIsoparsec s U1 where
-  gToIsoparsec _ = konst U1
+instance GToIsoparsec U1 s where
+  gToIsoparsec = konst U1
 
-instance ToIsoparsec s c => GToIsoparsec s (K1 i c) where
-  gToIsoparsec (Proxy :: Proxy (K1 i c)) =
-    toIsoparsec (Proxy @c) >>^ si' (Just . K1) (Just . unK1)
+instance ToIsoparsec c s => GToIsoparsec (K1 i c) s where
+  gToIsoparsec =
+    toIsoparsec >>^ si' (Just . K1) (Just . unK1)
 
-instance GToIsoparsec s c => GToIsoparsec s (M1 i t c) where
-  gToIsoparsec (Proxy :: Proxy (M1 i t c)) =
-    gToIsoparsec (Proxy @c) >>^ si' (Just . M1) (Just . unM1)
+instance GToIsoparsec c s => GToIsoparsec (M1 i t c) s where
+  gToIsoparsec =
+    gToIsoparsec >>^ si' (Just . M1) (Just . unM1)
 
-instance (GToIsoparsec s a, GToIsoparsec s b) => GToIsoparsec s (a :*: b) where
-  gToIsoparsec (Proxy :: Proxy (a :*: b)) =
-    (gToIsoparsec (Proxy @a) &&& gToIsoparsec (Proxy @b))
+instance (GToIsoparsec a s, GToIsoparsec b s) => GToIsoparsec (a :*: b) s where
+  gToIsoparsec =
+    (gToIsoparsec &&& gToIsoparsec)
       >>^ si' (\(a, b) -> Just (a :*: b)) (\(a :*: b) -> Just (a, b))
 
-instance (GToIsoparsec s a, GToIsoparsec s b) => GToIsoparsec s (a :+: b) where
-  gToIsoparsec (Proxy :: Proxy (a :+: b)) =
-    ( ( try (gToIsoparsec (Proxy @a) >>^ si' (Just . Left) fromLeft)
-          <+> (gToIsoparsec (Proxy @b) >>^ si' (Just . Right) fromRight)
+instance (GToIsoparsec a s, GToIsoparsec b s) => GToIsoparsec (a :+: b) s where
+  gToIsoparsec =
+    ( ( try (gToIsoparsec >>^ si' (Just . Left) fromLeft)
+          <+> (gToIsoparsec >>^ si' (Just . Right) fromRight)
       )
         >>> ((arr $ si' (Just . L1) fromL) ||| (arr $ si' (Just . R1) fromR))
     )

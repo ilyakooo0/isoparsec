@@ -25,18 +25,18 @@ module Data.Isoparsec
     (<.>),
     (<^>),
     repeating,
-    repeating1,
     opt,
     morphed,
+    coercing,
   )
 where
 
 import Control.Arrow.Extra as X
 import Control.Tuple.Morph
+import Data.Coerce
 import Data.Isoparsec.Internal as X
 import Data.Isoparsec.ToIsoparsec as X
 import Data.Isoparsec.Tokenable as X
-import Data.List.NonEmpty (NonEmpty)
 import Optics.Iso
 import Optics.Optic
 import Optics.Prism
@@ -47,9 +47,6 @@ opt m = try m <+> konst ()
 
 repeating :: (PolyArrow m SemiIso', IsoparsecTry m, ArrowPlus m) => m () b -> m () [b]
 repeating m = (try m &&& (try (repeating m) <+> konst [])) >>^ cons'
-
-repeating1 :: (PolyArrow m SemiIso', IsoparsecTry m, ArrowPlus m) => m () b -> m () (NonEmpty b)
-repeating1 m = (m &&& repeating m) >>^ consNE'
 
 infix 0 <?>
 
@@ -118,6 +115,9 @@ infixr 0 <^>
   b ->
   m x' y'
 b <^> p = b >>> morphed %>% p
+
+coercing :: (Coercible a b, PolyArrow m SemiIso') => m a b
+coercing = arr $ siJust coerce coerce
 
 morphed ::
   (TupleMorphable a c, TupleMorphable b c) =>
