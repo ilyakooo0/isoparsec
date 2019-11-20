@@ -5,6 +5,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
@@ -26,8 +28,12 @@ module Data.Isoparsec
     (<^>),
     repeating,
     opt,
+    opt',
     morphed,
     coercing,
+    mapIso,
+    auto,
+    specific,
   )
 where
 
@@ -37,6 +43,7 @@ import Data.Coerce
 import Data.Isoparsec.Internal as X
 import Data.Isoparsec.ToIsoparsec as X
 import Data.Isoparsec.Tokenable as X
+import qualified Data.Map as M
 import Optics.Iso
 import Optics.Optic
 import Optics.Prism
@@ -45,7 +52,10 @@ import Prelude hiding ((.), fail, id)
 opt :: (ArrowPlus m, IsoparsecTry m, PolyArrow m SemiIso') => m () () -> m () ()
 opt m = try m <+> konst ()
 
-repeating :: (PolyArrow m SemiIso', IsoparsecTry m, ArrowPlus m) => m () b -> m () [b]
+opt' :: (ArrowPlus m, IsoparsecTry m, PolyArrow m SemiIso', Eq a) => a -> m () a -> m () ()
+opt' a m = (try m >>> tsnok a) <+> konst ()
+
+repeating :: (PolyArrow m SemiIso', IsoparsecTry m, ArrowPlus m, Eq b) => m () b -> m () [b]
 repeating m = (try m &&& (try (repeating m) <+> konst [])) >>^ cons'
 
 infix 0 <?>
@@ -134,3 +144,17 @@ instance (k `Is` A_Prism) => ToSemiIso (Optic' k NoIx b a) a b where
 
 instance ToSemiIso (SemiIso' a b) a b where
   si = id
+
+mapIso :: (PolyArrow m SemiIso', Ord a, Ord b) => [(a, b)] -> m a b
+mapIso m = arr $ si' (`M.lookup` n) (`M.lookup` u)
+  where
+    n = M.fromListWith (error "mapping not unique") m
+    u =
+      M.fromListWith (error "mapping not unique") $
+        (\(a, b) -> (b, a)) <$> m
+
+auto :: forall x s m. (ToIsoparsec x s, Isoparsec m s) => m () x
+auto = toIsoparsec
+
+specific :: forall x s m. (ToIsoparsec x s, Isoparsec m s, Eq x, Show x) => x -> m () ()
+specific x = auto @x >>> check (== x) >>> tsnok x

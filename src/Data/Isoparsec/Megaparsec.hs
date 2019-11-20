@@ -40,13 +40,15 @@ instance (MonadParsec e s m) => PolyArrow (Kleisli m) SemiIso' where
     Nothing -> failure Nothing mempty
 
 instance
-  (MonadParsec e s m, M.Token s ~ Token s, Tokenable s) =>
+  (MonadParsec e s m, M.Token s ~ Token s, s ~ M.Tokens s, Tokenable s) =>
   Isoparsec (Kleisli m) s
   where
 
   anyToken = Kleisli $ \() -> anySingle
 
   token t = Kleisli $ \() -> M.single t $> ()
+
+  manyTokens = Kleisli $ takeP Nothing . fromIntegral
 
 instance MonadParsec e s m => IsoparsecFail (Kleisli m) e where
   fail e = Kleisli $ \_ -> fancyFailure . S.singleton . ErrorCustom $ e

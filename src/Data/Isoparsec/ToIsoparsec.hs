@@ -1,10 +1,9 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -15,8 +14,12 @@ where
 
 import Control.Arrow.Extra
 import Data.Isoparsec.Internal
+import Data.Isoparsec.Tokenable
 import GHC.Generics
 import Prelude hiding ((.))
+
+instance {-# OVERLAPPABLE #-} t ~ Token s => ToIsoparsec t s where
+  toIsoparsec = anyToken
 
 class ToIsoparsec a s where
 
@@ -46,16 +49,11 @@ instance (GToIsoparsec a s, GToIsoparsec b s) => GToIsoparsec (a :*: b) s where
 
 instance (GToIsoparsec a s, GToIsoparsec b s) => GToIsoparsec (a :+: b) s where
   gToIsoparsec =
-    ( ( try (gToIsoparsec >>^ si' (Just . Left) fromLeft)
-          <+> (gToIsoparsec >>^ si' (Just . Right) fromRight)
-      )
-        >>> ((arr $ si' (Just . L1) fromL) ||| (arr $ si' (Just . R1) fromR))
+    ( try (gToIsoparsec >>^ si' (Just . Left) (either Just (const Nothing)))
+        <+> (gToIsoparsec >>^ si' (Just . Right) (either (const Nothing) Just))
     )
+      >>> (arr (si' (Just . L1) fromL) ||| arr (si' (Just . R1) fromR))
     where
-      fromLeft (Left a) = Just a
-      fromLeft _ = Nothing
-      fromRight (Right b) = Just b
-      fromRight _ = Nothing
       fromL (L1 a) = Just a
       fromL _ = Nothing
       fromR (R1 b) = Just b

@@ -68,12 +68,12 @@ json = si' Just Just ^<< (try string <+> try array <+> try integer <+> object)
     array =
       _Array
         <.> token '['
-          &&& whiteSpace
+          &&& unsafeWhiteSpace
           &&& ( try
-                  ( ( ( json &&& whiteSpace
+                  ( ( ( json &&& unsafeWhiteSpace
                           &&& try
                             ( repeating
-                                ( (token ',' &&& whiteSpace &&& json) >>% morphed
+                                ( (token ',' &&& unsafeWhiteSpace &&& json) >>% morphed
                                 )
                             )
                           <+> konst []
@@ -84,16 +84,16 @@ json = si' Just Just ^<< (try string <+> try array <+> try integer <+> object)
                   )
                   <+> konst []
               )
-          &&& whiteSpace
+          &&& unsafeWhiteSpace
           &&& token ']'
     integer = _JInteger <.> number
     object =
-      _Object <.> token '{' &&& whiteSpace
+      _Object <.> token '{' &&& unsafeWhiteSpace
         &&& ( try
-                ( let pair = (whiteSpace &&& string' &&& whiteSpace &&& token ':' &&& whiteSpace &&& json &&& whiteSpace) >>% morphed
-                   in (pair &&& try (repeating ((token ',' &&& whiteSpace &&& pair) >>% morphed) <+> konst [])) >>^ cons'
+                ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>% morphed
+                   in (pair &&& try (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>% morphed) <+> konst [])) >>^ cons'
                 )
                 <+> konst []
             )
-        &&& whiteSpace
+        &&& unsafeWhiteSpace
         &&& token '}'

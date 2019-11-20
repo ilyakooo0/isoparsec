@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
@@ -15,6 +16,7 @@ import Data.Isoparsec.Cokleisli
 import Prelude hiding ((.), id)
 
 runPrinter ::
+  forall m s a.
   Monad m =>
   Cokleisli (WriterT (Dual s) m) () a ->
   a ->
@@ -37,10 +39,14 @@ instance IsoparsecTry (Cokleisli (WriterT (Dual s) m)) where
   try = id
 
 instance
-  (MonadPlus m, Monoid s, Eq (Token s), Tokenable s) =>
+  (MonadPlus m, Monoid s, Eq (Token s), Tokenable s, Show s) =>
   Isoparsec (Cokleisli (WriterT (Dual s) m)) s
   where
 
   token t = Cokleisli $ const $ tell . Dual . liftToken $ t
 
   anyToken = Cokleisli $ tell . Dual . liftToken
+
+  manyTokens = Cokleisli $ \w -> do
+    tell $ Dual w
+    return . fromIntegral . length . lowerTokens $ w

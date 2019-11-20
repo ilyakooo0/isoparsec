@@ -12,7 +12,9 @@ module Spec.Orphans
   )
 where
 
+import Data.ByteString
 import Data.Isoparsec
+import Data.Isoparsec.ByteString ()
 import Data.Isoparsec.Chunks
 import Data.Proxy
 import GHC.TypeLits
@@ -24,3 +26,6 @@ instance
   Arbitrary (Chunk n s)
   where
   arbitrary = Chunk . liftTokens <$> vectorOf (fromIntegral $ natVal @n Proxy) arbitrary
+
+instance Arbitrary ByteString where
+  arbitrary = liftTokens <$> listOf arbitrary

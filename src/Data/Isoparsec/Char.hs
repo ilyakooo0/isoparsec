@@ -6,8 +6,8 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Data.Isoparsec.Char
-  ( whiteSpace,
-    whiteSpace1,
+  ( unsafeWhiteSpace,
+    unsafeWhiteSpace1,
     space,
     number,
   )
@@ -21,11 +21,11 @@ import Prelude hiding ((.), id)
 space :: (Isoparsec m s, Token s ~ Char) => m () ()
 space = token ' '
 
-whiteSpace :: (Isoparsec m s, Token s ~ Char) => m () ()
-whiteSpace = tokensWhile isSpace >>> tsnok mempty
+unsafeWhiteSpace :: (Isoparsec m s, Token s ~ Char) => m () ()
+unsafeWhiteSpace = tokensWhile isSpace >>> badTsnok mempty
 
-whiteSpace1 :: (Isoparsec m s, Token s ~ Char) => m () ()
-whiteSpace1 = tokensWhile1 isSpace >>> tsnok (liftToken ' ')
+unsafeWhiteSpace1 :: (Isoparsec m s, Token s ~ Char) => m () ()
+unsafeWhiteSpace1 = tokensWhile1 isSpace >>> badTsnok (liftToken ' ')
 
 number :: (Isoparsec m s, Token s ~ Char) => m () Integer
 number =

@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -20,4 +19,4 @@ newtype Chunk (n :: Nat) s = Chunk {unChunk :: s}
 
 instance (CmpNat n 0 ~ 'GT, KnownNat n) => ToIsoparsec (Chunk n s) s where
   toIsoparsec =
-    manyTokens (fromIntegral $ natVal @n Proxy) >>> coercing
+    konst (fromIntegral $ natVal @n Proxy) >>> manyTokens >>> coercing

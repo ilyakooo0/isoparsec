@@ -6,7 +6,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LiberalTypeSynonyms #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -27,6 +26,9 @@ module Data.Isoparsec.Internal
     siCheck',
     check,
     levitate,
+    siDecompose,
+    badKonst,
+    badTsnok,
   )
 where
 
@@ -42,11 +44,14 @@ class
   Isoparsec m s
     | m -> s where
 
-  -- {-# MINIMAL anyToken, chunk #-}
+  {-# MINIMAL anyToken, manyTokens #-}
 
   anyToken :: m () (Token s)
 
   token :: Token s -> m () ()
+
+  default token :: Eq (Token s) => Token s -> m () ()
+  token x = anyToken >>> tsnok x
 
   tokens :: [Token s] -> m () ()
 
@@ -66,12 +71,7 @@ class
   tokenWhere f =
     anyToken >>> check f
 
-  manyTokens :: Natural -> m () s
-  manyTokens n =
-    manyTokens' n >>> check ((== n) . fromIntegral . P.length) >>^ levitate
-    where
-      manyTokens' 0 = arr $ isoConst' () []
-      manyTokens' m = anyToken &&& manyTokens' (m - 1) >>^ cons'
+  manyTokens :: m Natural s
 
   tokensWhile :: (Token s -> Bool) -> m () s
 
@@ -116,6 +116,9 @@ class IsoparsecFail m e where
 
 newtype SemiIso' s a = SemiIso' (SemiIso s s a a)
 
+siDecompose :: SemiIso' a b -> (a -> Maybe b, b -> Maybe a)
+siDecompose (SemiIso' s) = withIso s (,)
+
 type SemiIso s t a b = Iso s (Maybe t) (Maybe a) b
 
 si' :: (s -> Maybe a) -> (a -> Maybe s) -> SemiIso' s a
@@ -136,11 +139,17 @@ siJust a b = si' (Just . a) (Just . b)
 isoConst' :: s -> a -> SemiIso' s a
 isoConst' s a = si' (const $ Just a) (const $ Just s)
 
-konst :: PolyArrow a SemiIso' => x -> a () x
-konst x = arr $ si' (const $ Just x) (const $ Just ())
+konst :: (PolyArrow a SemiIso', Eq x) => x -> a () x
+konst x = badKonst x >>> check (== x)
 
-tsnok :: PolyArrow a SemiIso' => x -> a x ()
-tsnok x = arr $ si' (const $ Just ()) (const $ Just x)
+badKonst :: (PolyArrow a SemiIso') => x -> a () x
+badKonst x = arr $ si' (const $ Just x) (const $ Just ())
+
+tsnok :: (PolyArrow a SemiIso', Eq x) => x -> a x ()
+tsnok x = check (== x) >>> badTsnok x
+
+badTsnok :: (PolyArrow a SemiIso') => x -> a x ()
+badTsnok x = arr $ si' (const $ Just ()) (const $ Just x)
 
 check :: PolyArrow a SemiIso' => (s -> Bool) -> a s s
 check f = arr $ siCheck f id id

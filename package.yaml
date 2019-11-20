@@ -30,7 +30,7 @@ library:
   - megaparsec
   - containers
   - bytestring
-  - text
+  # - text
   - mtl
 
 
@@ -61,3 +61,4 @@ tests:
     - tasty-quickcheck
     - QuickCheck
     - megaparsec
+    - bytestring
