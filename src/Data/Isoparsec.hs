@@ -126,7 +126,7 @@ infixr 0 <^>
   m x' y'
 b <^> p = b >>> morphed %>% p
 
-coercing :: (Coercible a b, PolyArrow m SemiIso') => m a b
+coercing :: forall a b m. (Coercible a b, PolyArrow m SemiIso') => m a b
 coercing = arr $ siJust coerce coerce
 
 morphed ::

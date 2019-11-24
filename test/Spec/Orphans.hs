@@ -1,7 +1,9 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -14,7 +16,7 @@ where
 
 import Data.ByteString
 import Data.Isoparsec
-import Data.Isoparsec.ByteString ()
+import Data.Isoparsec.ByteString
 import Data.Isoparsec.Chunks
 import Data.Proxy
 import GHC.TypeLits
@@ -29,3 +31,9 @@ instance
 
 instance Arbitrary ByteString where
   arbitrary = liftTokens <$> listOf arbitrary
+
+deriving instance Arbitrary (Byte16 e)
+
+deriving instance Arbitrary (Byte32 e)
+
+deriving instance Arbitrary (Byte64 e)
