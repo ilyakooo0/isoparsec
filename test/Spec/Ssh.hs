@@ -16,8 +16,9 @@ module Spec.Ssh
   )
 where
 
+import Data.ByteString as BS
 import Data.ByteString.Char8 as C
-import Data.Char
+import qualified Data.Char as C
 import Data.Either
 import Data.Isoparsec
 import Data.Isoparsec.ByteString
@@ -26,6 +27,7 @@ import Data.Isoparsec.Printer
 import Data.Maybe
 import Data.Void
 import Data.Word
+import qualified Data.Word8 as W8
 import GHC.Generics
 import Optics
 import Spec.Orphans ()
@@ -90,7 +92,7 @@ data Payload
 instance Arbitrary Payload where
   arbitrary =
     oneof
-      [ VersionPayload . P.filter (not . isSpace) <$> s,
+      [ VersionPayload . P.filter (not . C.isSpace) <$> s,
         IgnorePayload <$> arbitrary,
         ServiceRequest <$> s,
         DebugPayload <$> arbitrary <*> s,
@@ -117,9 +119,11 @@ instance ToIsoparsec Payload ByteString where
         )
       <+> try
         ( _VersionPayload <.> utf8 "SSH-2.0-"
-            &&& (tokensWhile ((\c -> c /= ' ' && c /= '\r') . toEnum . fromEnum) >>> ftu8)
-            &&& opt (chunk " " &&& (tokensWhile (/= (toEnum . fromEnum $ '\r')) >>> badTsnok "") >>% morphed)
-            &&& chunk "\r\n"
+            &&& ( ( try (takeUntil "\r\n" >>> check (BS.all (not . W8.isSpace)))
+                      <+> ((takeUntil " " &&& (takeUntil "\r\n" >>> badTsnok "")) >>% morphed)
+                  )
+                    >>> ftu8
+                )
         )
       <+> try (_IgnorePayload <.> specific IgnoreMsg &&& tokensWhile (const True))
       <+> try
@@ -142,6 +146,7 @@ spec = do
   let shouldParse s e = runMegaparsec @() @ByteString parser s `shouldBe` Right e
   it "deserializes" $ do
     "SSH-2.0-TesT\r\n" `shouldParse` VersionPayload "TesT"
+    "SSH-2.0-TesT random comment\r\n" `shouldParse` VersionPayload "TesT"
     "\x2__" `shouldParse` IgnorePayload "__"
     "\x5\0\0\0\x6tested" `shouldParse` ServiceRequest "tested"
 

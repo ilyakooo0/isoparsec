@@ -75,6 +75,13 @@ class
 
   tokensWhile :: (Token s -> Bool) -> m () s
 
+  takeUntil :: s -> m () s
+
+  default takeUntil :: Eq (Token s) => s -> m () s
+  takeUntil s = takeUntil' s >>^ levitate
+    where
+      takeUntil' s' = try (chunk s' >>> konst []) <+> ((anyToken &&& takeUntil' s') >>^ cons')
+
   default tokensWhile :: (Token s -> Bool) -> m () s
   tokensWhile f =
     tokensWhile' f >>> check (P.all f) >>^ levitate
