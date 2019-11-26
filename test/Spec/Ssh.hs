@@ -188,7 +188,7 @@ spec = do
       `shouldParseBS` Packet (ServiceRequest (SSHString "henlo")) (Padding "69") NoneMAC
     ("\0\0\0\xd" <> "\x2" <> "\x2\0\0\0\x5henlo" <> "69")
       `shouldParseBS` Packet (IgnorePayload "\0\0\0\x5henlo") (Padding "69") NoneMAC
-    ("\0\0\0\xd" <> "\x3 " <> "\x2\0\0henlo!" <> "69a")
+    ("\0\0\0\xd" <> "\x3" <> "\x2\0\0henlo!" <> "69a")
       `shouldParseBS` Packet (IgnorePayload "\0\0henlo!") (Padding "69a") NoneMAC
     ("\0\0\0\xb" <> "\x3" <> "\x2henlo!" <> "69a")
       `shouldParseBS` Packet (IgnorePayload "henlo!") (Padding "69a") NoneMAC
