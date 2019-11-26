@@ -179,7 +179,6 @@ type family TEq a b :: Bool where
 -- ## Other
 
 type family (++) (as :: [k]) (bs :: [k]) :: [k] where
-  (++) a '[] = a
   (++) '[] b = b
   (++) (a ': as) bs = a ': (as ++ bs)
 

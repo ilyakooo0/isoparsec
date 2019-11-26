@@ -34,6 +34,7 @@ module Data.Isoparsec
     mapIso,
     auto,
     specific,
+    throughIntegral,
   )
 where
 
@@ -126,7 +127,7 @@ infixr 0 <^>
   m x' y'
 b <^> p = b >>> morphed %>% p
 
-coercing :: forall a b m. (Coercible a b, PolyArrow m SemiIso') => m a b
+coercing :: forall b a m. (Coercible a b, PolyArrow m SemiIso') => m a b
 coercing = arr $ siJust coerce coerce
 
 morphed ::
@@ -158,3 +159,8 @@ auto = toIsoparsec
 
 specific :: forall x s m. (ToIsoparsec x s, Isoparsec m s, Eq x, Show x) => x -> m () ()
 specific x = auto @x >>> check (== x) >>> tsnok x
+
+throughIntegral ::
+  (Integral a, Integral b, Num a, Num b, PolyArrow m SemiIso') =>
+  m a b
+throughIntegral = arr $ siJust fromIntegral fromIntegral

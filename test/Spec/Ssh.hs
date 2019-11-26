@@ -3,6 +3,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -10,6 +12,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Spec.Ssh
   ( spec,
@@ -18,23 +21,19 @@ module Spec.Ssh
 where
 
 import Data.ByteString as BS
-import Data.ByteString.Char8 as C
 import qualified Data.Char as C
-import Data.Either
 import Data.Isoparsec
 import Data.Isoparsec.ByteString
-import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
-import Data.Void
 import qualified Data.Word8 as W8
 import GHC.Generics
 import Optics
+import Spec.Helper
 import Spec.Orphans ()
 import Test.Hspec
 import Test.Tasty
 import Test.Tasty.QuickCheck
-import Text.Megaparsec.Error
 import Prelude as P hiding ((.))
 
 data MessageNumber
@@ -140,19 +139,61 @@ instance ToIsoparsec Payload ByteString where
             &&& auto @SSHString
         )
 
+newtype Padding = Padding {unPadding :: ByteString}
+  deriving (Eq, Ord, Show, Generic, Arbitrary)
+
+makePrisms ''Padding
+
+newtype MAC = MAC {unMAC :: ByteString}
+  deriving (Eq, Ord, Show, Generic, Arbitrary)
+
+data NoneMAC = NoneMAC
+  deriving (Eq, Ord, Show, Generic)
+
+instance ToIsoparsec NoneMAC b where
+  toIsoparsec = konst NoneMAC
+
+instance Arbitrary NoneMAC where
+  arbitrary = return NoneMAC
+
+data Packet mac
+  = Packet Payload Padding mac
+  deriving (Eq, Show)
+
+instance Arbitrary mac => Arbitrary (Packet mac) where
+  arbitrary = Packet <$> arbitrary <*> arbitrary <*> arbitrary
+
+makePrisms ''Packet
+
+instance ToIsoparsec mac ByteString => ToIsoparsec (Packet mac) ByteString where
+  toIsoparsec =
+    ( ( (auto @(Byte32 'BE) &&& auto @Byte8)
+          >>> (throughIntegral *** throughIntegral)
+          >>> siJust
+            (\(packetL, paddingL) -> (packetL - paddingL - 1, paddingL))
+            (\(payloadL, paddingL) -> (payloadL + paddingL + 1, paddingL))
+          ^>> (manyTokens *** manyTokens) >>> (tuck (auto @Payload) *** coercing @Padding)
+      )
+        &&& auto @mac
+    )
+      >>^ siJust (\((a, b), c) -> Packet a b c) (\(Packet a b c) -> ((a, b), c))
+
 spec :: Spec
 spec = do
-  let parser = toIsoparsec @Payload
-  let shouldParse s e = runMegaparsec @() @ByteString parser s `shouldBe` Right e
-  it "deserializes" $ do
-    "SSH-2.0-TesT\r\n" `shouldParse` VersionPayload "TesT"
-    "SSH-2.0-TesT random comment\r\n" `shouldParse` VersionPayload "TesT"
-    "\x2__" `shouldParse` IgnorePayload "__"
-    "\x5\0\0\0\x6tested" `shouldParse` ServiceRequest (SSHString "tested")
+  runIO . (print :: ByteString -> IO ()) . fromJust . runPrinter auto $ Packet (ServiceRequest (SSHString "henlo")) (Padding "69") NoneMAC
+  it "deserialize payload" $ do
+    "SSH-2.0-TesT\r\n" `shouldParseBS` VersionPayload "TesT"
+    "SSH-2.0-TesT random comment\r\n" `shouldParseBS` VersionPayload "TesT"
+    "\x2__" `shouldParseBS` IgnorePayload "__"
+    "\x5\0\0\0\x6tested" `shouldParseBS` ServiceRequest (SSHString "tested")
+  it "deserialize packet" $
+    ("\0\0\0\xd" <> "\x2" <> "\x5\0\0\0\x5henlo" <> "69")
+      `shouldParseBS` Packet (ServiceRequest (SSHString "henlo")) (Padding "69") NoneMAC
 
 quickSpec :: TestTree
-quickSpec = testProperty "roundtrips" $ \(x :: Payload) ->
-  let s = fromJust $ runPrinter @Maybe @ByteString toIsoparsec x
-   in counterexample (C.unpack s) $ case runMegaparsec @Void @ByteString toIsoparsec s of
-        Right y -> property $ x == y
-        Left err -> counterexample (errorBundlePretty err) False
+quickSpec =
+  testGroup
+    "roundtrips"
+    [ testProperty "payload" $ roundtrip @Payload @ByteString,
+      testProperty "packet" $ roundtrip @(Packet NoneMAC) @ByteString
+    ]

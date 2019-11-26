@@ -50,3 +50,5 @@ instance
   manyTokens = Cokleisli $ \w -> do
     tell $ Dual w
     return . fromIntegral . length . lowerTokens $ w
+
+  tuck (Cokleisli f) = Cokleisli $ lift . fmap getDual . execWriterT . f

@@ -44,7 +44,7 @@ class
   Isoparsec m s
     | m -> s where
 
-  {-# MINIMAL anyToken, manyTokens #-}
+  {-# MINIMAL anyToken, manyTokens, tuck #-}
 
   anyToken :: m () (Token s)
 
@@ -94,6 +94,23 @@ class
   tokensWhile1 f =
     tokenWhere f &&& tokensWhile f
       >>^ si' (\(a, aa) -> Just $ liftToken a <> aa) levitateHead
+
+  -- | "tucks" the context of the parser into its input.
+  -- >               ┌─────┐
+  -- >               │  s  ├───────┐
+  -- >               └─────┘       │
+  -- >    ┌────┐                   │      ┌─────┐
+  -- > ───┤ () ├────▶              └──────┤  a  ├▶
+  -- >    └────┘                          └─────┘
+  -- >                      │
+  -- >                 ┌────┴─────┐
+  -- >                 │   tuck   │
+  -- >                 └────┬─────┘
+  -- >                      ▼
+  -- >   ┌─────┐                          ┌─────┐
+  -- > ──┤  s  ├──────────────────────────┤  a  ├─▶
+  -- >   └─────┘                          └─────┘
+  tuck :: m () a -> m s a
 
 class IsoparsecLabel m l where
   label :: l -> m a b -> m a b

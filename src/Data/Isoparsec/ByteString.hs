@@ -72,22 +72,22 @@ instance (FiniteBits b, Integral b) => BytesToIsoparsec b 'LE where
 type Byte8 = Word8
 
 newtype Byte16 (e :: Endianness) = Byte16 {unByte16 :: Word16}
-  deriving (Show, Eq, Ord, Enum, Num, Bounded)
+  deriving (Show, Eq, Ord, Enum, Num, Real, Integral, Bounded)
 
 newtype Byte32 (e :: Endianness) = Byte32 {unByte32 :: Word32}
-  deriving (Show, Eq, Ord, Enum, Num, Bounded)
+  deriving (Show, Eq, Ord, Enum, Num, Real, Integral, Bounded)
 
 newtype Byte64 (e :: Endianness) = Byte64 {unByte64 :: Word64}
-  deriving (Show, Eq, Ord, Enum, Num, Bounded)
+  deriving (Show, Eq, Ord, Enum, Num, Real, Integral, Bounded)
 
 instance BytesToIsoparsec Word16 e => ToIsoparsec (Byte16 e) ByteString where
-  toIsoparsec = bytesToIsoparsec (Proxy @e) >>> coercing @Word16 @(Byte16 e)
+  toIsoparsec = bytesToIsoparsec (Proxy @e) >>> coercing @(Byte16 e) @Word16
 
 instance BytesToIsoparsec Word32 e => ToIsoparsec (Byte32 e) ByteString where
-  toIsoparsec = bytesToIsoparsec (Proxy @e) >>> coercing @Word32 @(Byte32 e)
+  toIsoparsec = bytesToIsoparsec (Proxy @e) >>> coercing @(Byte32 e) @Word32
 
 instance BytesToIsoparsec Word64 e => ToIsoparsec (Byte64 e) ByteString where
-  toIsoparsec = bytesToIsoparsec (Proxy @e) >>> coercing @Word64 @(Byte64 e)
+  toIsoparsec = bytesToIsoparsec (Proxy @e) >>> coercing @(Byte64 e) @Word64
 
 instance ToIsoparsec Bool ByteString where
   toIsoparsec = anyToken >>> mapIso [(0, False), (1, True)]
@@ -97,7 +97,7 @@ newtype SSHString = SSHString {unSSHString :: String}
 
 instance ToIsoparsec SSHString ByteString where
   toIsoparsec =
-    auto @(Byte32 'BE) >>> coercing @_ @Word32
+    auto @(Byte32 'BE) >>> coercing @Word32
       >>> siJust fromIntegral fromIntegral ^>> manyTokens
       >>> ftu8
       >>^ siJust SSHString unSSHString
