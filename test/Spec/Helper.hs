@@ -5,8 +5,7 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Spec.Helper
-  ( shouldParse,
-    shouldParseBS,
+  ( shouldParseBS,
     roundtrip,
   )
 where
@@ -28,10 +27,6 @@ shouldParse ::
   forall x s.
   ( ToIsoparsec x s,
     Stream s,
-    Show s,
-    Show (I.Token s),
-    s ~ M.Tokens s,
-    I.Token s ~ M.Token s,
     Show x,
     Eq x,
     Isoparsec (Kleisli (Parsec Void s)) s
@@ -39,7 +34,9 @@ shouldParse ::
   s ->
   x ->
   Expectation
-shouldParse s e = runMegaparsec @Void @s toIsoparsec s `shouldBe` Right e
+shouldParse s e = case runMegaparsec @Void @s toIsoparsec s of
+  Right e' -> e' `shouldBe` e
+  Left err -> expectationFailure $ errorBundlePretty err
 
 shouldParseBS ::
   forall x.

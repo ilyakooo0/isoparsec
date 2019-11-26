@@ -24,8 +24,6 @@ import Data.ByteString as BS
 import qualified Data.Char as C
 import Data.Isoparsec
 import Data.Isoparsec.ByteString
-import Data.Isoparsec.Printer
-import Data.Maybe
 import qualified Data.Word8 as W8
 import GHC.Generics
 import Optics
@@ -180,15 +178,20 @@ instance ToIsoparsec mac ByteString => ToIsoparsec (Packet mac) ByteString where
 
 spec :: Spec
 spec = do
-  runIO . (print :: ByteString -> IO ()) . fromJust . runPrinter auto $ Packet (ServiceRequest (SSHString "henlo")) (Padding "69") NoneMAC
   it "deserialize payload" $ do
     "SSH-2.0-TesT\r\n" `shouldParseBS` VersionPayload "TesT"
     "SSH-2.0-TesT random comment\r\n" `shouldParseBS` VersionPayload "TesT"
     "\x2__" `shouldParseBS` IgnorePayload "__"
     "\x5\0\0\0\x6tested" `shouldParseBS` ServiceRequest (SSHString "tested")
-  it "deserialize packet" $
+  it "deserialize packet" $ do
     ("\0\0\0\xd" <> "\x2" <> "\x5\0\0\0\x5henlo" <> "69")
       `shouldParseBS` Packet (ServiceRequest (SSHString "henlo")) (Padding "69") NoneMAC
+    ("\0\0\0\xd" <> "\x2" <> "\x2\0\0\0\x5henlo" <> "69")
+      `shouldParseBS` Packet (IgnorePayload "\0\0\0\x5henlo") (Padding "69") NoneMAC
+    ("\0\0\0\xd" <> "\x3 " <> "\x2\0\0henlo!" <> "69a")
+      `shouldParseBS` Packet (IgnorePayload "\0\0henlo!") (Padding "69a") NoneMAC
+    ("\0\0\0\xb" <> "\x3" <> "\x2henlo!" <> "69a")
+      `shouldParseBS` Packet (IgnorePayload "henlo!") (Padding "69a") NoneMAC
 
 quickSpec :: TestTree
 quickSpec =

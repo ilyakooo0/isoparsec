@@ -55,7 +55,7 @@ instance
   tuck (Kleisli f) = Kleisli $ \sub -> do
     sup <- getInput
     setInput sub
-    r <- f ()
+    r <- f () <* eof
     setInput sup
     return r
 
