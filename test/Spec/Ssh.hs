@@ -32,7 +32,7 @@ import Spec.Orphans ()
 import Test.Hspec
 import Test.Tasty
 import Test.Tasty.QuickCheck
-import Prelude as P hiding ((.))
+import Prelude as P hiding ((.), id)
 
 data MessageNumber
   = DisconnectMsg
@@ -140,7 +140,16 @@ instance ToIsoparsec Payload ByteString where
 newtype Padding = Padding {unPadding :: ByteString}
   deriving (Eq, Ord, Show, Generic, Arbitrary)
 
-makePrisms ''Padding
+newtype ZeroPadding = ZeroPadding {zeroPaddingLength :: Byte8}
+  deriving (Eq, Ord, Show, Generic, Arbitrary)
+
+badZeroPadding :: Isoparsec m ByteString => m Byte8 ZeroPadding
+badZeroPadding =
+  throughIntegral
+    >>> manyTokens
+    >>^ siJust
+      (ZeroPadding . fromIntegral . BS.length)
+      (flip BS.replicate 0 . fromIntegral . zeroPaddingLength)
 
 newtype MAC = MAC {unMAC :: ByteString}
   deriving (Eq, Ord, Show, Generic, Arbitrary)
@@ -155,7 +164,7 @@ instance Arbitrary NoneMAC where
   arbitrary = return NoneMAC
 
 data Packet mac
-  = Packet Payload Padding mac
+  = Packet Payload ZeroPadding mac
   deriving (Eq, Show)
 
 instance Arbitrary mac => Arbitrary (Packet mac) where
@@ -170,7 +179,8 @@ instance ToIsoparsec mac ByteString => ToIsoparsec (Packet mac) ByteString where
           >>> siJust
             (\(packetL, paddingL) -> (packetL - paddingL - 1, paddingL))
             (\(payloadL, paddingL) -> (payloadL + paddingL + 1, paddingL))
-          ^>> (manyTokens *** manyTokens) >>> (tuck (auto @Payload) *** coercing @Padding)
+          ^>> (manyTokens *** throughIntegral)
+          >>> (tuck (auto @Payload) *** badZeroPadding)
       )
         &&& auto @mac
     )
@@ -185,13 +195,13 @@ spec = do
     "\x5\0\0\0\x6tested" `shouldParseBS` ServiceRequest (SSHString "tested")
   it "deserialize packet" $ do
     ("\0\0\0\xd" <> "\x2" <> "\x5\0\0\0\x5henlo" <> "69")
-      `shouldParseBS` Packet (ServiceRequest (SSHString "henlo")) (Padding "69") NoneMAC
+      `shouldParseBS` Packet (ServiceRequest (SSHString "henlo")) (ZeroPadding 2) NoneMAC
     ("\0\0\0\xd" <> "\x2" <> "\x2\0\0\0\x5henlo" <> "69")
-      `shouldParseBS` Packet (IgnorePayload "\0\0\0\x5henlo") (Padding "69") NoneMAC
+      `shouldParseBS` Packet (IgnorePayload "\0\0\0\x5henlo") (ZeroPadding 2) NoneMAC
     ("\0\0\0\xd" <> "\x3" <> "\x2\0\0henlo!" <> "69a")
-      `shouldParseBS` Packet (IgnorePayload "\0\0henlo!") (Padding "69a") NoneMAC
+      `shouldParseBS` Packet (IgnorePayload "\0\0henlo!") (ZeroPadding 3) NoneMAC
     ("\0\0\0\xb" <> "\x3" <> "\x2henlo!" <> "69a")
-      `shouldParseBS` Packet (IgnorePayload "henlo!") (Padding "69a") NoneMAC
+      `shouldParseBS` Packet (IgnorePayload "henlo!") (ZeroPadding 3) NoneMAC
 
 quickSpec :: TestTree
 quickSpec =
