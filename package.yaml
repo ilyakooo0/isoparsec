@@ -37,6 +37,7 @@ default-extensions:
 - ConstraintKinds
 - DataKinds
 - DefaultSignatures
+- DeriveGeneric
 - FlexibleContexts
 - FlexibleInstances
 - FunctionalDependencies
@@ -47,6 +48,7 @@ default-extensions:
 - PatternSynonyms
 - PolyKinds
 - ScopedTypeVariables
+- StandaloneDeriving
 - TupleSections
 - TypeApplications
 - TypeFamilies

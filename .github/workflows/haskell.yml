@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        resolver: [lts-12.26, lts-13.11, lts-13.19, lts-14]
+        resolver: [lts-13.11, lts-13.19, lts-14]
 
     steps:
     - uses: actions/checkout@v1
