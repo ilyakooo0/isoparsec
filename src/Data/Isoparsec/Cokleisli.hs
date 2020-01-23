@@ -1,6 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Data.Isoparsec.Cokleisli
   ( Cokleisli (..),
   )
@@ -16,13 +13,11 @@ import Prelude hiding ((.))
 newtype Cokleisli m a b = Cokleisli {unCokleisli :: b -> m a}
 
 instance Monad m => Category (Cokleisli m) where
-
   id = Cokleisli return
 
   (Cokleisli cb) . (Cokleisli ba) = Cokleisli $ cb >=> ba
 
 instance (Alternative m, Monad m) => BaseArrow (Cokleisli m) where
-
   (Cokleisli cb) *** (Cokleisli c'b') = Cokleisli $
     \(c, c') -> do
       b' <- c'b' c'
@@ -44,7 +39,6 @@ instance MonadPlus m => ArrowPlus (Cokleisli m) where
   (Cokleisli lhs) <+> (Cokleisli rhs) = Cokleisli $ \x -> lhs x `mplus` rhs x
 
 instance (Alternative m, Monad m) => ArrowChoice (Cokleisli m) where
-
   left (Cokleisli cb) = Cokleisli $ \case
     Left c -> Left <$> cb c
     Right d -> return $ Right d

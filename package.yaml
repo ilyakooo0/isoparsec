@@ -33,6 +33,25 @@ library:
   # - text
   - mtl
 
+default-extensions:
+- ConstraintKinds
+- DataKinds
+- DefaultSignatures
+- FlexibleContexts
+- FlexibleInstances
+- FunctionalDependencies
+- GADTs
+- GeneralizedNewtypeDeriving
+- LambdaCase
+- MultiParamTypeClasses
+- PatternSynonyms
+- PolyKinds
+- ScopedTypeVariables
+- TupleSections
+- TypeApplications
+- TypeFamilies
+- TypeOperators
+- UndecidableInstances
 
 executables:
   isoparsec-exe:

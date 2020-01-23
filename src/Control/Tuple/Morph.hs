@@ -1,18 +1,3 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns -Wno-redundant-constraints #-}
 
 module Control.Tuple.Morph
@@ -189,13 +174,11 @@ type family Length (aa :: [k]) :: Nat where
 -- # Morphing
 
 class TupleMorphable t th | t -> th where
-
   unmorph :: t -> HList th
 
   morph :: HList th -> t
 
 instance (IsMophableTuple t ~ flag, TupleMorphable' t th flag) => TupleMorphable t th where
-
   unmorph = unmorph' (Proxy @flag)
 
   morph = morph' (Proxy @flag)
@@ -203,19 +186,16 @@ instance (IsMophableTuple t ~ flag, TupleMorphable' t th flag) => TupleMorphable
 -- ## Implementation
 
 class TupleMorphable' t th (flag :: Bool) | t flag -> th where
-
   unmorph' :: Proxy flag -> t -> HList th
 
   morph' :: Proxy flag -> HList th -> t
 
 instance TupleMorphable' t '[t] 'False where
-
   unmorph' _ t = t :+ HNil
 
   morph' _ (t :+ HNil) = t
 
 instance (GenericTupleMorphable (Rep t) th, Generic t) => TupleMorphable' t th 'True where
-
   unmorph' _ = genericUnmorph . from
 
   morph' _ = to . genericMorph
@@ -223,25 +203,21 @@ instance (GenericTupleMorphable (Rep t) th, Generic t) => TupleMorphable' t th '
 -- ### Generics
 
 class GenericTupleMorphable f th | f -> th where
-
   genericUnmorph :: f p -> HList th
 
   genericMorph :: HList th -> f p
 
 instance (GenericTupleMorphable f t) => GenericTupleMorphable (M1 i c f) t where
-
   genericUnmorph = genericUnmorph . unM1
 
   genericMorph = M1 . genericMorph
 
 instance (TupleMorphable c t) => GenericTupleMorphable (K1 i c) t where
-
   genericUnmorph = unmorph . unK1
 
   genericMorph = K1 . morph
 
 instance GenericTupleMorphable U1 '[] where
-
   genericUnmorph _ = HNil
 
   genericMorph _ = U1
@@ -260,7 +236,6 @@ instance
   ) =>
   GenericTupleMorphable (f :*: g) c
   where
-
   genericUnmorph (a :*: b) = genericUnmorph a ++: genericUnmorph b
 
   genericMorph cc = genericMorph aa :*: genericMorph bb

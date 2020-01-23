@@ -1,7 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MonoLocalBinds #-}
-{-# LANGUAGE UndecidableInstances #-}
-
 module Control.Arrow.Extra.ArrowPlus
   ( ArrowPlus (..),
   )

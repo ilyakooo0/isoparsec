@@ -1,8 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Isoparsec.Printer
@@ -42,7 +37,6 @@ instance
   (MonadPlus m, Monoid s, Eq (Token s), Tokenable s, Show s) =>
   Isoparsec (Cokleisli (WriterT (Dual s) m)) s
   where
-
   token t = Cokleisli $ const $ tell . Dual . liftToken $ t
 
   anyToken = Cokleisli $ tell . Dual . liftToken
