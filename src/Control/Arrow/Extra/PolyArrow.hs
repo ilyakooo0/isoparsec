@@ -1,24 +1,29 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, MonoLocalBinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Control.Arrow.Extra.PolyArrow
-  ( PolyArrow(..)
-  , (^>>)
-  , (>>^)
-  , (<<^)
-  , (^<<)
-  , (^>^)
-  , (^<^)
-  ) where
+  ( PolyArrow (..),
+    (^>>),
+    (>>^),
+    (<<^),
+    (^<<),
+    (^>^),
+    (^<^),
+  )
+where
 
-import qualified Control.Arrow                 as A
-import           Control.Arrow.Extra.BaseArrow
-import           Control.Category
+import Control.Arrow.Extra.BaseArrow
+import Control.Category
+
+infixr 1 ^>>, >>^
+
+infixr 1 ^<<, <<^
+
+infixr 1 ^>^, ^<^
 
 class BaseArrow a => PolyArrow a p where
   arr :: p b c -> a b c
-
-instance A.Arrow a => PolyArrow a (->) where
-  arr = A.arr
 
 (^>>) :: PolyArrow a p => p b c -> a c d -> a b d
 f ^>> a = arr f >>> a

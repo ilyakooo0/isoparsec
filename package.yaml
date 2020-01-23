@@ -25,6 +25,15 @@ dependencies:
 library:
   source-dirs: src
 
+  dependencies:
+  - optics-core
+  - megaparsec
+  - containers
+  - bytestring
+  # - text
+  - mtl
+
+
 executables:
   isoparsec-exe:
     main:                Main.hs
@@ -33,8 +42,7 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    dependencies:
-    - isoparsec
+    dependencies: []
 
 tests:
   isoparsec-test:
@@ -44,5 +52,14 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    dependencies: []
-    # - isoparsec
+    dependencies:
+    - isoparsec
+    - tasty
+    - tasty-hspec
+    - hspec
+    - optics
+    - tasty-quickcheck
+    - QuickCheck
+    - megaparsec
+    - bytestring
+    - word8
