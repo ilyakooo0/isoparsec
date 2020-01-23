@@ -46,6 +46,7 @@ default-extensions:
 - GeneralizedNewtypeDeriving
 - LambdaCase
 - MultiParamTypeClasses
+- OverloadedStrings
 - PatternSynonyms
 - PolyKinds
 - ScopedTypeVariables
