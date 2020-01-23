@@ -34,6 +34,7 @@ library:
   - mtl
 
 default-extensions:
+- AllowAmbiguousTypes
 - ConstraintKinds
 - DataKinds
 - DefaultSignatures

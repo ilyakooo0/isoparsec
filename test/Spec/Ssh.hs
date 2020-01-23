@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Spec.Ssh
   ( spec,
     quickSpec,

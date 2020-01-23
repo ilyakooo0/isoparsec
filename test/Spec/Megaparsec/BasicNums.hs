@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Spec.Megaparsec.BasicNums
   ( spec,
     quickSpec,
