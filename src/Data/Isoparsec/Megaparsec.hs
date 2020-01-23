@@ -1,12 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE QuantifiedConstraints #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Isoparsec.Megaparsec
@@ -45,7 +36,6 @@ instance
   (MonadParsec e s m, M.Token s ~ Token s, s ~ M.Tokens s, Tokenable s) =>
   Isoparsec (Kleisli m) s
   where
-
   anyToken = Kleisli $ const anySingle
 
   token t = Kleisli . const $ M.single t $> ()

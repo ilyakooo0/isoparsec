@@ -1,9 +1,4 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 
 module Spec.Megaparsec.BasicNums
   ( spec,
@@ -33,8 +28,8 @@ instance Arbitrary Foo where
 
 makePrisms ''Foo
 
-parser :: (Isoparsec m s, Token s ~ Char, IsoparsecLabel m String) => m () Foo
-parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number <?> "oh no")
+parser :: (Isoparsec m String, IsoparsecLabel m String) => m () Foo
+parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number <?> ("oh no" :: String))
 
 spec :: Spec
 spec =

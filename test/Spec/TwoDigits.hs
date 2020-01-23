@@ -1,13 +1,3 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
-
 module Spec.TwoDigits
   ( spec,
     quickSpec,
@@ -60,7 +50,7 @@ instance ToIsoparsec Digits String
 
 spec :: Spec
 spec = do
-  let parser = toIsoparsec
+  let parser = toIsoparsec @_ @String
   it "deserializes" $ do
     runMegaparsec @() parser "12" `shouldBe` Right (TwoDigits (SingleDigit "1") (SingleDigit "2"))
     runMegaparsec @() parser "125" `shouldBe` Right (ThreeDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5"))

@@ -1,6 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 module Control.Arrow.Extra.BaseArrow
   ( BaseArrow (..),
@@ -14,7 +12,6 @@ infixl 3 ***
 infixl 3 &&&
 
 class Category a => BaseArrow a where
-
   {-# MINIMAL (***), (&&&) #-}
 
   first :: a b c -> a (b, d) (c, d)

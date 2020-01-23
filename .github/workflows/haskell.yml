@@ -7,16 +7,26 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        resolver: [lts-13.11, lts-13.19, lts-14]
+
     steps:
     - uses: actions/checkout@v1
 
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.stack
+        key: ${{ runner.os }}-stack-${{ matrix.resolver }}
+
     - name: Build
       run: |
-        stack build --fast --pedantic --ghc-options '-j' --test --no-run-tests --bench --no-run-benchmarks
+        stack build --fast --pedantic --ghc-options '-j' --test --no-run-tests --bench --no-run-benchmarks --resolver=${{ matrix.resolver }}
 
     - name: Test
       run: |
-        stack test --fast --pedantic --ghc-options '-j'
+        stack test --fast --pedantic --ghc-options '-j' --resolver=${{ matrix.resolver }}
 
     - name: Weeder
       run: |

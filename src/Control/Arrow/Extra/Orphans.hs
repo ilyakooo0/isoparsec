@@ -1,6 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Control.Arrow.Extra.Orphans
@@ -15,7 +12,6 @@ instance {-# OVERLAPPABLE #-} A.ArrowZero a => ArrowZero a where
   zeroArrow = A.zeroArrow
 
 instance {-# OVERLAPPABLE #-} A.ArrowChoice a => ArrowChoice a where
-
   left = A.left
 
   right = A.right
@@ -25,7 +21,6 @@ instance {-# OVERLAPPABLE #-} A.ArrowChoice a => ArrowChoice a where
   (|||) = (A.|||)
 
 instance {-# OVERLAPPABLE #-} (Category a, A.Arrow a) => BaseArrow a where
-
   first = A.first
 
   second = A.second

@@ -1,12 +1,3 @@
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
-
 module Data.Isoparsec.ToIsoparsec
   ( ToIsoparsec (..),
   )
@@ -22,9 +13,7 @@ instance {-# OVERLAPPABLE #-} t ~ Token s => ToIsoparsec t s where
   toIsoparsec = anyToken
 
 class ToIsoparsec a s where
-
   toIsoparsec :: Isoparsec m s => m () a
-
   default toIsoparsec :: (Isoparsec m s, Generic a, GToIsoparsec (Rep a) s) => m () a
   toIsoparsec = gToIsoparsec >>^ si' (Just . to) (Just . from)
 

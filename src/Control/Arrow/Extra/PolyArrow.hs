@@ -1,7 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MonoLocalBinds #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Control.Arrow.Extra.PolyArrow
   ( PolyArrow (..),
     (^>>),

@@ -1,7 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 module Control.Arrow.Extra.ArrowChoice
   ( ArrowChoice (..),
@@ -17,7 +14,6 @@ infixl 2 +++
 infixl 2 |||
 
 class BaseArrow a => ArrowChoice a where
-
   left :: a b c -> a (Either b d) (Either c d)
   left = (+++ id)
 
