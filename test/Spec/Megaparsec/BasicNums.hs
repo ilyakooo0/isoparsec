@@ -29,7 +29,7 @@ instance Arbitrary Foo where
 makePrisms ''Foo
 
 parser :: (Isoparsec m String, IsoparsecLabel m String) => m () Foo
-parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number <?> "oh no")
+parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number <?> ("oh no" :: String))
 
 spec :: Spec
 spec =
