@@ -55,6 +55,7 @@ default-extensions:
 - TypeFamilies
 - TypeOperators
 - UndecidableInstances
+- RankNTypes
 
 tests:
   isoparsec-test:
