@@ -21,17 +21,16 @@ description:         Please see the README on GitHub at <https://github.com/ilya
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
+- optics-core
+- megaparsec
+- bytestring
+# - text
+- mtl
 
 library:
   source-dirs: src
-
-  dependencies:
-  - optics-core
-  - megaparsec
-  - containers
-  - bytestring
-  # - text
-  - mtl
+  dependencies: []
 
 default-extensions:
 - AllowAmbiguousTypes
@@ -57,26 +56,17 @@ default-extensions:
 - TypeOperators
 - UndecidableInstances
 
-executables:
-  isoparsec-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies: []
-
 tests:
   isoparsec-test:
     main:                Spec.hs
-    source-dirs:         test
+    source-dirs:
+    - test
+    - src
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - isoparsec
     - tasty
     - tasty-hspec
     - hspec
