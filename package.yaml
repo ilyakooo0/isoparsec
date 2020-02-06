@@ -56,16 +56,6 @@ default-extensions:
 - TypeOperators
 - UndecidableInstances
 
-executables:
-  isoparsec-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies: []
-
 tests:
   isoparsec-test:
     main:                Spec.hs
