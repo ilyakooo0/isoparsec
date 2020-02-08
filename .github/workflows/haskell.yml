@@ -30,4 +30,4 @@ jobs:
 
     - name: Weeder
       run: |
-        curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s --resolver=${{ matrix.resolver }} .
+        curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s "--resolver=${{ matrix.resolver }} ."
