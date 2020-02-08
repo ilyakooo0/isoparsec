@@ -22,7 +22,7 @@ jobs:
 
     - name: Build
       run: |
-        stack build --fast --pedantic --ghc-options '-j' --test --no-run-tests --bench --no-run-benchmarks --resolver=${{ matrix.resolver }}
+        stack build --fast --pedantic --ghc-options '-j -ddump-to-file -ddump-hi' --test --no-run-tests --bench --no-run-benchmarks --resolver=${{ matrix.resolver }}
 
     - name: Test
       run: |
@@ -30,4 +30,4 @@ jobs:
 
     - name: Weeder
       run: |
-        curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s "--resolver=${{ matrix.resolver }} ."
+        curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s .
