@@ -23,4 +23,4 @@ unsafeWhiteSpace1 = tokensWhile1 isSpace >>> badTsnok (liftToken ' ')
 number :: (Isoparsec m s, Token s ~ Char) => m () Integer
 number =
   tokensWhile1 (\c -> isNumber c || c == '+' || c == '-')
-    >>^ si' (readMaybe @Integer . lowerTokens) (Just . liftTokens . show)
+    >>^ siMaybe (readMaybe @Integer . lowerTokens) (Just . liftTokens . show)

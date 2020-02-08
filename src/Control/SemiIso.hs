@@ -1,32 +1,49 @@
 module Control.SemiIso
-  ( SemiIso (..),
+  ( module X,
+    SemiIso (..),
     pattern SI,
+    siMaybe,
+    siPure,
     turn,
+    withSemiIso,
+    AlternativeMonad,
   )
 where
 
-import Control.Applicative
+import Control.Applicative as X
 import Control.Arrow.Extra.ArrowChoice
 import Control.Arrow.Extra.ArrowPlus
 import Control.Arrow.Extra.ArrowZero
 import Control.Arrow.Extra.BaseArrow
 import Control.Category (Category (..))
-import Control.Monad
+import Control.Monad as X
 import Data.Bitraversable
 import Prelude hiding ((.), id)
 
+type AlternativeMonad m = (Alternative m, Monad m)
+
 data SemiIso a b
   = SemiIso
-      { embed :: forall f. (Alternative f, Monad f) => a -> f b,
-        project :: forall f. (Alternative f, Monad f) => b -> f a
+      { embed :: forall f. AlternativeMonad f => a -> f b,
+        project :: forall f. AlternativeMonad f => b -> f a
       }
 
 pattern SI ::
   forall a b.
-  (forall f. (Alternative f, Monad f) => a -> f b) ->
-  (forall f. (Alternative f, Monad f) => b -> f a) ->
+  (forall f. AlternativeMonad f => a -> f b) ->
+  (forall f. AlternativeMonad f => b -> f a) ->
   SemiIso a b
 pattern SI a b = SemiIso a b
+
+siMaybe :: (a -> Maybe b) -> (b -> Maybe a) -> SemiIso a b
+siMaybe a b = SI (maybeToAlternative . a) (maybeToAlternative . b)
+  where
+    maybeToAlternative :: Alternative f => Maybe a -> f a
+    maybeToAlternative (Just x) = pure x
+    maybeToAlternative Nothing = empty
+
+siPure :: (a -> b) -> (b -> a) -> SemiIso a b
+siPure a b = SI (pure . a) (pure . b)
 
 instance Category SemiIso where
   id = SemiIso pure pure
@@ -62,3 +79,10 @@ instance ArrowPlus SemiIso where
 -- | prop> turn . turn = id
 turn :: SemiIso a b -> SemiIso b a
 turn (SemiIso a b) = SemiIso b a
+
+withSemiIso ::
+  AlternativeMonad f =>
+  SemiIso a b ->
+  ((a -> f b) -> (b -> f a) -> c) ->
+  c
+withSemiIso (SemiIso a b) f = f a b

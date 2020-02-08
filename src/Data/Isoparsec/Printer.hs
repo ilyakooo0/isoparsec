@@ -19,16 +19,10 @@ runPrinter ::
 runPrinter p = fmap getDual . execWriterT . unCokleisli p
 
 instance IsoparsecFail (Cokleisli (WriterT s Maybe)) e where
-  fail _ = Cokleisli . const $ WriterT Nothing
+  failure _ = Cokleisli . const $ WriterT Nothing
 
 instance IsoparsecFail (Cokleisli (WriterT s (Either e))) e where
-  fail = Cokleisli . const . WriterT . Left
-
-instance IsoparsecLabel (Cokleisli (WriterT s Maybe)) e where
-  label _ = id
-
-instance IsoparsecLabel (Cokleisli (WriterT s (Either e))) y where
-  label _ = id
+  failure = Cokleisli . const . WriterT . Left
 
 instance IsoparsecTry (Cokleisli (WriterT (Dual s) m)) where
   try = id

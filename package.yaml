@@ -22,14 +22,15 @@ description:         Please see the README on GitHub at <https://github.com/ilya
 dependencies:
 - base >= 4.7 && < 5
 - containers
-- optics-core
 - megaparsec
 - bytestring
 # - text
 - mtl
+- profunctors
 
 library:
   source-dirs: src
+  other-modules: Control.Prism
   dependencies: []
 
 default-extensions:
@@ -71,7 +72,7 @@ tests:
     - tasty
     - tasty-hspec
     - hspec
-    - optics
+    - lens
     - tasty-quickcheck
     - QuickCheck
     - megaparsec

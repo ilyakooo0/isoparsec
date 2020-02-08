@@ -7,7 +7,6 @@ import Control.Applicative
 import Control.Arrow.Extra
 import Control.Monad
 import Data.Isoparsec.Internal
-import Optics.Iso
 import Prelude hiding ((.))
 
 newtype Cokleisli m a b = Cokleisli {unCokleisli :: b -> m a}
@@ -27,8 +26,8 @@ instance (Alternative m, Monad m) => BaseArrow (Cokleisli m) where
   (Cokleisli cb) &&& (Cokleisli c'b) = Cokleisli $
     \(c, c') -> c'b c' >> cb c
 
-instance MonadPlus m => PolyArrow (Cokleisli m) SemiIso' where
-  arr (SemiIso' si) = Cokleisli $ \t -> case withIso si (flip const) t of
+instance MonadPlus m => PolyArrow (Cokleisli m) SemiIso where
+  arr si = Cokleisli $ \t -> case project si t of
     Just x -> return x
     Nothing -> mzero
 
