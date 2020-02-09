@@ -66,7 +66,7 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
                     )
                       >>% morphed
                   )
-                    >>^ cons'
+                    >>^ siCons
                 )
                   <+> konst []
               )
@@ -76,7 +76,7 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
     object =
       _Object <.> token '{' &&& unsafeWhiteSpace
         &&& ( ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>^ morphed
-                 in (pair &&& (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+> konst [])) >>^ cons'
+                 in (pair &&& (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+> konst [])) >>^ siCons
               )
                 <+> konst []
             )

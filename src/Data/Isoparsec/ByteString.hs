@@ -2,7 +2,6 @@
 
 module Data.Isoparsec.ByteString
   ( utf8,
-    ftu8,
     ByteString,
     Endianness (..),
     Byte8,
@@ -21,11 +20,8 @@ import Data.Proxy
 import Data.Word
 import Prelude as P hiding ((.))
 
-utf8 :: Isoparsec m ByteString => String -> m () ()
-utf8 = chunk . C.pack
-
-ftu8 :: PolyArrow m SemiIso => m ByteString String
-ftu8 = arr $ siJust C.unpack C.pack
+utf8 :: PolyArrow m SemiIso => m ByteString String
+utf8 = arr $ siPure C.unpack C.pack
 
 data Endianness = BE | LE
 
@@ -35,7 +31,7 @@ class BytesToIsoparsec b (e :: Endianness) where
 instance (FiniteBits b, Integral b) => BytesToIsoparsec b 'BE where
   bytesToIsoparsec _ =
     konst word8s >>> manyTokens
-      >>^ siJust
+      >>^ siPure
         (fromInteger . BS.foldl (\i w -> shiftL i 8 .|. toInteger w) 0)
         ( liftTokens . snd . P.head
             . P.drop (fromIntegral word8s)
@@ -49,7 +45,7 @@ instance (FiniteBits b, Integral b) => BytesToIsoparsec b 'BE where
 instance (FiniteBits b, Integral b) => BytesToIsoparsec b 'LE where
   bytesToIsoparsec _ =
     konst word8s >>> manyTokens
-      >>^ siJust
+      >>^ siPure
         (fromInteger . BS.foldr (\w i -> shiftL i 8 .|. toInteger w) 0)
         ( liftTokens . P.reverse . snd . P.head
             . P.drop (fromIntegral word8s)
@@ -89,9 +85,9 @@ newtype SSHString = SSHString {unSSHString :: String}
 instance ToIsoparsec SSHString ByteString where
   toIsoparsec =
     auto @(Byte32 'BE) >>> coercing @Word32
-      >>> siJust fromIntegral fromIntegral ^>> manyTokens
-      >>> ftu8
-      >>^ siJust SSHString unSSHString
+      >>> siPure fromIntegral fromIntegral ^>> manyTokens
+      >>> utf8
+      >>^ siPure SSHString unSSHString
 
 instance Tokenable ByteString where
   type Token ByteString = Word8

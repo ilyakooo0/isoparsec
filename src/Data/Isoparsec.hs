@@ -44,7 +44,7 @@ opt' :: (ArrowPlus m, PolyArrow m SemiIso, Eq a) => a -> m () a -> m () ()
 opt' a m = (m >>> tsnok a) <+> konst ()
 
 repeating :: (PolyArrow m SemiIso, ArrowPlus m, Eq b) => m () b -> m () [b]
-repeating m = (m &&& (repeating m <+> konst [])) >>^ cons'
+repeating m = (m &&& (repeating m <+> konst [])) >>^ siCons
 
 infixr 1 %>>
 
@@ -110,7 +110,7 @@ infixr 0 <^>
 b <^> p = b >>> morphed %>% p
 
 coercing :: forall b a m. (Coercible a b, PolyArrow m SemiIso) => m a b
-coercing = arr $ siJust coerce coerce
+coercing = arr $ siPure coerce coerce
 
 morphed ::
   (TupleMorphable a c, TupleMorphable b c) => SemiIso a b
@@ -142,4 +142,4 @@ specific x = auto @x >>> check (== x) >>> tsnok x
 throughIntegral ::
   (Integral a, Integral b, Num a, Num b, PolyArrow m SemiIso) =>
   m a b
-throughIntegral = arr $ siJust fromIntegral fromIntegral
+throughIntegral = arr $ siPure fromIntegral fromIntegral
