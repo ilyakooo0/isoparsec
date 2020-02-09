@@ -22,9 +22,6 @@ runMegaparsec ::
   Either (ParseErrorBundle s e) r
 runMegaparsec (Kleisli f) = runParser (f () <* eof) ""
 
-instance (MonadParsec e s m) => IsoparsecTry (Kleisli m) where
-  try (Kleisli f) = Kleisli $ \a -> M.try (f a)
-
 instance (MonadParsec e s m) => PolyArrow (Kleisli m) SemiIso where
   arr si = Kleisli $ \t -> case embed si t of
     Just x -> return x
@@ -49,3 +46,6 @@ instance
 
 instance MonadParsec e s m => IsoparsecFail (Kleisli m) e where
   failure e = Kleisli $ \_ -> customFailure e
+
+instance (MonadParsec e s m, M.Token s ~ Token s, s ~ M.Tokens s) => ArrowPlus (Kleisli m) where
+  (Kleisli lhs) <+> (Kleisli rhs) = Kleisli $ \x -> try (lhs x) <|> rhs x

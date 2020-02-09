@@ -50,7 +50,7 @@ quickSpec =
           Left err -> counterexample (errorBundlePretty err) False
 
 json :: (PolyArrow m SemiIso, Isoparsec m String) => m () JSON
-json = SI pure pure ^<< (try string <+> try array <+> try integer <+> object)
+json = SI pure pure ^<< (string <+> array <+> integer <+> object)
   where
     string' = token '"' &&& tokensWhile (/= '"') &&& token '"'
     string = _JString <.> string'
@@ -58,19 +58,17 @@ json = SI pure pure ^<< (try string <+> try array <+> try integer <+> object)
       _Array
         <.> token '['
           &&& unsafeWhiteSpace
-          &&& ( try
-                  ( ( ( json &&& unsafeWhiteSpace
-                          &&& try
-                            ( repeating
+          &&& ( ( ( ( json &&& unsafeWhiteSpace
+                        &&& ( repeating
                                 ( (token ',' &&& unsafeWhiteSpace &&& json) >>% morphed
                                 )
                             )
-                          <+> konst []
-                      )
-                        >>% morphed
+                        <+> konst []
                     )
-                      >>^ cons'
+                      >>% morphed
                   )
+                    >>^ cons'
+                )
                   <+> konst []
               )
           &&& unsafeWhiteSpace
@@ -78,10 +76,9 @@ json = SI pure pure ^<< (try string <+> try array <+> try integer <+> object)
     integer = _JInteger <.> number
     object =
       _Object <.> token '{' &&& unsafeWhiteSpace
-        &&& ( try
-                ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>^ morphed
-                   in (pair &&& try (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+> konst [])) >>^ cons'
-                )
+        &&& ( ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>^ morphed
+                 in (pair &&& (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+> konst [])) >>^ cons'
+              )
                 <+> konst []
             )
         &&& unsafeWhiteSpace

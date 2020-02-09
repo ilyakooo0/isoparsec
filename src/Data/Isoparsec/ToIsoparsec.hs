@@ -38,7 +38,7 @@ instance (GToIsoparsec a s, GToIsoparsec b s) => GToIsoparsec (a :*: b) s where
 
 instance (GToIsoparsec a s, GToIsoparsec b s) => GToIsoparsec (a :+: b) s where
   gToIsoparsec =
-    ( try (gToIsoparsec >>^ SI (pure . Left) (either pure (const empty)))
+    ( (gToIsoparsec >>^ SI (pure . Left) (either pure (const empty)))
         <+> (gToIsoparsec >>^ SI (pure . Right) (either (const empty) pure))
     )
       >>> (arr (SI (pure . L1) fromL) ||| arr (SI (pure . R1) fromR))
