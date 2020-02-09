@@ -127,7 +127,7 @@ badZeroPadding :: Isoparsec m ByteString => m Byte8 ZeroPadding
 badZeroPadding =
   throughIntegral
     >>> manyTokens
-    >>^ siJust
+    >>^ siPure
       (ZeroPadding . fromIntegral . BS.length)
       (flip BS.replicate 0 . fromIntegral . zeroPaddingLength)
 
@@ -156,7 +156,7 @@ instance ToIsoparsec mac ByteString => ToIsoparsec (Packet mac) ByteString where
   toIsoparsec =
     ( ( (auto @(Byte32 'BE) &&& auto @Byte8)
           >>> (throughIntegral *** throughIntegral)
-          >>> siJust
+          >>> siPure
             (\(packetL, paddingL) -> (packetL - paddingL - 1, paddingL))
             (\(payloadL, paddingL) -> (payloadL + paddingL + 1, paddingL))
           ^>> (manyTokens *** throughIntegral)
@@ -164,7 +164,7 @@ instance ToIsoparsec mac ByteString => ToIsoparsec (Packet mac) ByteString where
       )
         &&& auto @mac
     )
-      >>^ siJust (\((a, b), c) -> Packet a b c) (\(Packet a b c) -> ((a, b), c))
+      >>^ siPure (\((a, b), c) -> Packet a b c) (\(Packet a b c) -> ((a, b), c))
 
 spec :: Spec
 spec = do
