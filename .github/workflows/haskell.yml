@@ -28,16 +28,17 @@ jobs:
       run: |
         stack test --fast --pedantic --ghc-options '-j' --resolver=${{ matrix.resolver }}
 
-  # weeder:
-  #   runs-on: ubuntu-latest
+  weeder:
 
-  #   steps:
+    runs-on: ubuntu-latest
 
-  #   - name: Cache
-  #     uses: actions/cache@v1
-  #     with:
-  #       path: ~/.stack
-  #       key: weeder
+    steps:
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.stack
+        key: weeder
 
     - name: Weeder
       run: |
