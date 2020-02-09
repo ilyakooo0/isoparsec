@@ -29,6 +29,6 @@ jobs:
         stack test --fast --pedantic --ghc-options '-j' --resolver=${{ matrix.resolver }}
 
     - name: Weeder
-      if: matrix.resolver == lts-14
+      if: matrix.resolver == 'lts-14'
       run: |
         curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s . --build
