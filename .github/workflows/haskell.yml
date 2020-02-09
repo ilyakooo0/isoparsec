@@ -28,17 +28,17 @@ jobs:
       run: |
         stack test --fast --pedantic --ghc-options '-j' --resolver=${{ matrix.resolver }}
 
-  weeder:
-    runs-on: ubuntu-latest
+  # weeder:
+  #   runs-on: ubuntu-latest
 
-    steps:
+  #   steps:
 
-    - name: Cache
-      uses: actions/cache@v1
-      with:
-        path: ~/.stack
-        key: weeder
+  #   - name: Cache
+  #     uses: actions/cache@v1
+  #     with:
+  #       path: ~/.stack
+  #       key: weeder
 
     - name: Weeder
       run: |
-        curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s --build .
+        curl -sSL https://raw.github.com/ndmitchell/weeder/master/misc/run.sh | sh -s . --build
