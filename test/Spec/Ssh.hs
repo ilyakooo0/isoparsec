@@ -90,38 +90,32 @@ makePrisms ''Payload
 
 instance ToIsoparsec Payload ByteString where
   toIsoparsec =
-    try
-      ( _DisconnectPayload
-          <.> specific DisconnectMsg
-            &&& auto @DisconnectReasonCode
-            &&& (tokensWhile (const True) >>> ftu8)
-      )
-      <+> try
-        ( _ServiceRequest <.> specific ServiceRequestMsg
-            &&& auto @SSHString
-        )
-      <+> try
-        ( _VersionPayload <.> utf8 "SSH-2.0-"
-            &&& ( ( try (takeUntil "\r\n" >>> check (BS.all (not . W8.isSpace)))
-                      <+> ((takeUntil " " &&& (takeUntil "\r\n" >>> badTsnok "")) >>% morphed)
+    ( _DisconnectPayload
+        <.> specific DisconnectMsg
+          &&& auto @DisconnectReasonCode
+          &&& (tokensWhile (const True) >>> ftu8)
+    )
+      <+> ( _ServiceRequest <.> specific ServiceRequestMsg
+              &&& auto @SSHString
+          )
+      <+> ( _VersionPayload <.> utf8 "SSH-2.0-"
+              &&& ( ( (takeUntil "\r\n" >>> check (BS.all (not . W8.isSpace)))
+                        <+> ((takeUntil " " &&& (takeUntil "\r\n" >>> badTsnok "")) >>% morphed)
+                    )
+                      >>> ftu8
                   )
-                    >>> ftu8
-                )
-        )
-      <+> try (_IgnorePayload <.> specific IgnoreMsg &&& tokensWhile (const True))
-      <+> try
-        ( _DebugPayload <.> specific DebugMsg
-            &&& auto @AlwaysDisplay
-            &&& auto @SSHString
-        )
-      <+> try
-        ( _UnimplementedPayload <.> specific UnimplementedMsg
-            &&& auto @PacketSequenceNumber
-        )
-      <+> try
-        ( _ServiceAccept <.> specific ServiceAcceptMsg
-            &&& auto @SSHString
-        )
+          )
+      <+> (_IgnorePayload <.> specific IgnoreMsg &&& tokensWhile (const True))
+      <+> ( _DebugPayload <.> specific DebugMsg
+              &&& auto @AlwaysDisplay
+              &&& auto @SSHString
+          )
+      <+> ( _UnimplementedPayload <.> specific UnimplementedMsg
+              &&& auto @PacketSequenceNumber
+          )
+      <+> ( _ServiceAccept <.> specific ServiceAcceptMsg
+              &&& auto @SSHString
+          )
 
 newtype Padding = Padding {unPadding :: ByteString}
   deriving (Eq, Ord, Show, Generic, Arbitrary)

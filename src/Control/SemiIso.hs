@@ -11,11 +11,7 @@ module Control.SemiIso
 where
 
 import Control.Applicative as X
-import Control.Arrow.Extra.ArrowChoice
-import Control.Arrow.Extra.ArrowPlus
-import Control.Arrow.Extra.ArrowZero
-import Control.Arrow.Extra.BaseArrow
-import Control.Category (Category (..))
+import Control.Arrow.Extra
 import Control.Monad as X
 import Data.Bitraversable
 import Prelude hiding ((.), id)

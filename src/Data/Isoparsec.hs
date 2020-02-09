@@ -37,14 +37,14 @@ import Data.Isoparsec.Tokenable as X
 import qualified Data.Map as M
 import Prelude hiding ((.), fail, id)
 
-opt :: (ArrowPlus m, IsoparsecTry m, PolyArrow m SemiIso) => m () () -> m () ()
-opt m = try m <+> konst ()
+opt :: (ArrowPlus m, PolyArrow m SemiIso) => m () () -> m () ()
+opt m = m <+> konst ()
 
-opt' :: (ArrowPlus m, IsoparsecTry m, PolyArrow m SemiIso, Eq a) => a -> m () a -> m () ()
-opt' a m = (try m >>> tsnok a) <+> konst ()
+opt' :: (ArrowPlus m, PolyArrow m SemiIso, Eq a) => a -> m () a -> m () ()
+opt' a m = (m >>> tsnok a) <+> konst ()
 
-repeating :: (PolyArrow m SemiIso, IsoparsecTry m, ArrowPlus m, Eq b) => m () b -> m () [b]
-repeating m = (try m &&& (try (repeating m) <+> konst [])) >>^ cons'
+repeating :: (PolyArrow m SemiIso, ArrowPlus m, Eq b) => m () b -> m () [b]
+repeating m = (m &&& (repeating m <+> konst [])) >>^ cons'
 
 infixr 1 %>>
 

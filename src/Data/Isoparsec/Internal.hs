@@ -2,7 +2,6 @@ module Data.Isoparsec.Internal
   ( module X,
     IsoparsecFail (..),
     Isoparsec (..),
-    IsoparsecTry (..),
     konst,
     tsnok,
     cons',
@@ -24,7 +23,7 @@ import Numeric.Natural
 import Prelude as P hiding ((.), id)
 
 class
-  (PolyArrow m SemiIso, ArrowPlus m, ArrowChoice m, IsoparsecTry m, Tokenable s) =>
+  (PolyArrow m SemiIso, ArrowPlus m, ArrowChoice m, Tokenable s) =>
   Isoparsec m s
     | m -> s where
   {-# MINIMAL anyToken, manyTokens, tuck #-}
@@ -59,14 +58,14 @@ class
   default takeUntil :: Eq (Token s) => s -> m () s
   takeUntil s = takeUntil' s >>^ levitate
     where
-      takeUntil' s' = try (chunk s' >>> konst []) <+> ((anyToken &&& takeUntil' s') >>^ cons')
+      takeUntil' s' = (chunk s' >>> konst []) <+> ((anyToken &&& takeUntil' s') >>^ cons')
 
   default tokensWhile :: (Token s -> Bool) -> m () s
   tokensWhile f =
     tokensWhile' f >>> check (P.all f) >>^ levitate
     where
       tokensWhile' g =
-        try (tokenWhere g &&& tokensWhile' g >>^ cons')
+        (tokenWhere g &&& tokensWhile' g >>^ cons')
           <+^ isoConst' () []
 
   tokensWhile1 :: (Token s -> Bool) -> m () s
@@ -107,9 +106,6 @@ cons' =
 
 levitate :: Tokenable s => SemiIso [Token s] s
 levitate = siJust liftTokens lowerTokens
-
-class IsoparsecTry m where
-  try :: m a b -> m a b
 
 class IsoparsecFail m e where
   failure :: e -> m a b

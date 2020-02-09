@@ -24,9 +24,6 @@ instance IsoparsecFail (Cokleisli (WriterT s Maybe)) e where
 instance IsoparsecFail (Cokleisli (WriterT s (Either e))) e where
   failure = Cokleisli . const . WriterT . Left
 
-instance IsoparsecTry (Cokleisli (WriterT (Dual s) m)) where
-  try = id
-
 instance
   (MonadPlus m, Monoid s, Eq (Token s), Tokenable s, Show s) =>
   Isoparsec (Cokleisli (WriterT (Dual s) m)) s

@@ -70,4 +70,4 @@ extra-deps:
 # compiler-check: newer-minor
 
 ghc-options:
-  "$locals": -ddump-to-file -ddump-hi -fwarn-unused-binds -fwarn-unused-imports -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wpartial-fields -Werror=missing-home-modules -Wmissing-home-modules -Widentities -Wredundant-constraints -Wmissing-export-lists
+  "$locals": -ddump-to-file -ddump-hi -fwarn-unused-binds -fwarn-unused-imports -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wpartial-fields -Werror=missing-home-modules -Wmissing-home-modules -Widentities -Wredundant-constraints -Wmissing-export-lists -Wunused-imports
