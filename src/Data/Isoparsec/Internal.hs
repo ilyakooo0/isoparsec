@@ -11,6 +11,8 @@ module Data.Isoparsec.Internal
     levitate,
     badKonst,
     badTsnok,
+    unroll,
+    arrowsWhile,
   )
 where
 
@@ -88,6 +90,14 @@ class
   -- > ──┤  s  ├──────────────────────────┤  a  ├─▶
   -- >   └─────┘                          └─────┘
   tuck :: m () a -> m s a
+
+arrowsWhile :: (PolyArrow m SemiIso, ArrowPlus m) => m () a -> m () [a]
+arrowsWhile f = ((f &&& arrowsWhile f) >>^ siCons) <+^ isoConst () []
+
+unroll :: (PolyArrow m SemiIso, ArrowPlus m, Eq a) => a -> m a (b, a) -> m () [b]
+unroll a f = (konst a >>> unroll' f) <+^ isoConst () []
+  where
+    unroll' g = (g >>> second (unroll' g)) >>^ siCons
 
 levitateHead :: Alternative f => Tokenable s => s -> f (Token s, s)
 levitateHead s = case lowerTokens s of
