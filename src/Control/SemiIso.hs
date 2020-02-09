@@ -12,7 +12,6 @@ where
 
 import Control.Applicative as X
 import Control.Arrow.Extra
-import Control.Category (Category (..))
 import Control.Monad as X
 import Data.Bitraversable
 import Prelude hiding ((.), id)

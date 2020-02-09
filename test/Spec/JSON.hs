@@ -59,10 +59,9 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
         <.> token '['
           &&& unsafeWhiteSpace
           &&& ( ( ( ( json &&& unsafeWhiteSpace
-                        &&& ( repeating
-                                ( (token ',' &&& unsafeWhiteSpace &&& json) >>% morphed
-                                )
-                            )
+                        &&& repeating
+                          ( (token ',' &&& unsafeWhiteSpace &&& json) >>% morphed
+                          )
                         <+> konst []
                     )
                       >>% morphed

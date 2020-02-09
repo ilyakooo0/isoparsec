@@ -44,7 +44,7 @@ opt' :: (ArrowPlus m, PolyArrow m SemiIso, Eq a) => a -> m () a -> m () ()
 opt' a m = (m >>> tsnok a) <+> konst ()
 
 repeating :: (PolyArrow m SemiIso, ArrowPlus m, Eq b) => m () b -> m () [b]
-repeating m = (m &&& ((repeating m) <+> konst [])) >>^ cons'
+repeating m = (m &&& (repeating m <+> konst [])) >>^ cons'
 
 infixr 1 %>>
 

@@ -20,12 +20,12 @@ instance Profunctor (Market a b) where
   rmap f (Market bt seta) = Market (f . bt) (either (Left . f) Right . seta)
 
 instance Choice (Market a b) where
-  left' (Market bt seta) = Market (Left . bt) $ \sc -> case sc of
+  left' (Market bt seta) = Market (Left . bt) $ \case
     Left s -> case seta s of
       Left t -> Left (Left t)
       Right a -> Right a
     Right c -> Left (Right c)
-  right' (Market bt seta) = Market (Right . bt) $ \cs -> case cs of
+  right' (Market bt seta) = Market (Right . bt) $ \case
     Left c -> Left (Left c)
     Right s -> case seta s of
       Left t -> Left (Right t)

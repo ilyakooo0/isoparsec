@@ -60,3 +60,28 @@
 # $ hlint --default > .hlint.yaml
 
 - ignore: {name: "Use list comprehension"}
+
+- arguments:
+  - -XAllowAmbiguousTypes
+  - -XConstraintKinds
+  - -XDataKinds
+  - -XDefaultSignatures
+  - -XDeriveGeneric
+  - -XFlexibleContexts
+  - -XFlexibleInstances
+  - -XFunctionalDependencies
+  - -XGADTs
+  - -XGeneralizedNewtypeDeriving
+  - -XLambdaCase
+  - -XMultiParamTypeClasses
+  - -XOverloadedStrings
+  - -XPatternSynonyms
+  - -XPolyKinds
+  - -XScopedTypeVariables
+  - -XStandaloneDeriving
+  - -XTupleSections
+  - -XTypeApplications
+  - -XTypeFamilies
+  - -XTypeOperators
+  - -XUndecidableInstances
+  - -XRankNTypes
