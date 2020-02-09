@@ -11,7 +11,6 @@ import Data.ByteString as BS
 import qualified Data.Char as C
 import Data.Isoparsec
 import Data.Isoparsec.ByteString
-import qualified Data.Word8 as W8
 import GHC.Generics
 import Spec.Helper
 import Spec.Orphans ()
@@ -93,16 +92,16 @@ instance ToIsoparsec Payload ByteString where
     ( _DisconnectPayload
         <.> specific DisconnectMsg
           &&& auto @DisconnectReasonCode
-          &&& (tokensWhile (const True) >>> ftu8)
+          &&& (tokensWhile (const True) >>> utf8)
     )
       <+> ( _ServiceRequest <.> specific ServiceRequestMsg
               &&& auto @SSHString
           )
-      <+> ( _VersionPayload <.> utf8 "SSH-2.0-"
-              &&& ( ( (takeUntil "\r\n" >>> check (BS.all (not . W8.isSpace)))
-                        <+> ((takeUntil " " &&& (takeUntil "\r\n" >>> badTsnok "")) >>% morphed)
-                    )
-                      >>> ftu8
+      <+> ( _VersionPayload <.> chunk "SSH-2.0-"
+              &&& ( (tokensWhile (not . flip BS.elem " \n\r") >>> utf8)
+                      &&& ( (chunk " " >>> takeUntil "\r\n" >>^ turn (badKonst ""))
+                              <+> chunk "\r\n"
+                          )
                   )
           )
       <+> (_IgnorePayload <.> specific IgnoreMsg &&& tokensWhile (const True))

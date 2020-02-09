@@ -136,10 +136,10 @@ isoConst :: s -> a -> SemiIso s a
 isoConst s a = SI (const $ pure a) (const $ pure s)
 
 konst :: (PolyArrow a SemiIso, Eq x) => x -> a () x
-konst x = badKonst x >>> check (== x)
+konst x = badKonst x ^>> check (== x)
 
-badKonst :: (PolyArrow a SemiIso) => x -> a () x
-badKonst x = arr $ SI (const $ pure x) (const $ pure ())
+badKonst :: x -> SemiIso () x
+badKonst x = SI (const $ pure x) (const $ pure ())
 
 tsnok :: (PolyArrow a SemiIso, Eq x) => x -> a x ()
 tsnok x = check (== x) >>> badTsnok x

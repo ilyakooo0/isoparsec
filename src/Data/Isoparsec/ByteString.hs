@@ -2,7 +2,6 @@
 
 module Data.Isoparsec.ByteString
   ( utf8,
-    ftu8,
     ByteString,
     Endianness (..),
     Byte8,
@@ -21,11 +20,8 @@ import Data.Proxy
 import Data.Word
 import Prelude as P hiding ((.))
 
-utf8 :: Isoparsec m ByteString => String -> m () ()
-utf8 = chunk . C.pack
-
-ftu8 :: PolyArrow m SemiIso => m ByteString String
-ftu8 = arr $ siPure C.unpack C.pack
+utf8 :: PolyArrow m SemiIso => m ByteString String
+utf8 = arr $ siPure C.unpack C.pack
 
 data Endianness = BE | LE
 
@@ -90,7 +86,7 @@ instance ToIsoparsec SSHString ByteString where
   toIsoparsec =
     auto @(Byte32 'BE) >>> coercing @Word32
       >>> siPure fromIntegral fromIntegral ^>> manyTokens
-      >>> ftu8
+      >>> utf8
       >>^ siPure SSHString unSSHString
 
 instance Tokenable ByteString where
