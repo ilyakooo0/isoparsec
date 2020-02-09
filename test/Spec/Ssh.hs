@@ -6,13 +6,13 @@ module Spec.Ssh
   )
 where
 
+import Control.Lens.TH
 import Data.ByteString as BS
 import qualified Data.Char as C
 import Data.Isoparsec
 import Data.Isoparsec.ByteString
 import qualified Data.Word8 as W8
 import GHC.Generics
-import Optics
 import Spec.Helper
 import Spec.Orphans ()
 import Test.Hspec

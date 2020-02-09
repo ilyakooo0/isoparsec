@@ -6,13 +6,13 @@ module Spec.JSON
 where
 
 import Control.Arrow.Extra
+import Control.Lens.TH
 import Data.Isoparsec
 import Data.Isoparsec.Char
 import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
 import Data.Void
-import Optics hiding (elements)
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Text.Megaparsec.Error
@@ -49,8 +49,8 @@ quickSpec =
           Right y -> property $ x == y
           Left err -> counterexample (errorBundlePretty err) False
 
-json :: (PolyArrow m SemiIso', Isoparsec m String) => m () JSON
-json = si' Just Just ^<< (try string <+> try array <+> try integer <+> object)
+json :: (PolyArrow m SemiIso, Isoparsec m String) => m () JSON
+json = SI pure pure ^<< (try string <+> try array <+> try integer <+> object)
   where
     string' = token '"' &&& tokensWhile (/= '"') &&& token '"'
     string = _JString <.> string'
@@ -79,8 +79,8 @@ json = si' Just Just ^<< (try string <+> try array <+> try integer <+> object)
     object =
       _Object <.> token '{' &&& unsafeWhiteSpace
         &&& ( try
-                ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>% morphed
-                   in (pair &&& try (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>% morphed) <+> konst [])) >>^ cons'
+                ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>^ morphed
+                   in (pair &&& try (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+> konst [])) >>^ cons'
                 )
                 <+> konst []
             )

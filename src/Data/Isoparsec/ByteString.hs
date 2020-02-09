@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
+
 module Data.Isoparsec.ByteString
   ( utf8,
     ftu8,
@@ -23,7 +24,7 @@ import Prelude as P hiding ((.))
 utf8 :: Isoparsec m ByteString => String -> m () ()
 utf8 = chunk . C.pack
 
-ftu8 :: PolyArrow m SemiIso' => m ByteString String
+ftu8 :: PolyArrow m SemiIso => m ByteString String
 ftu8 = arr $ siJust C.unpack C.pack
 
 data Endianness = BE | LE
@@ -93,7 +94,6 @@ instance ToIsoparsec SSHString ByteString where
       >>^ siJust SSHString unSSHString
 
 instance Tokenable ByteString where
-
   type Token ByteString = Word8
 
   liftTokens = pack

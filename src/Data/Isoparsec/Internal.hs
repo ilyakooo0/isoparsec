@@ -1,11 +1,8 @@
 module Data.Isoparsec.Internal
-  ( SemiIso' (..),
-    SemiIso,
-    si',
+  ( module X,
     IsoparsecFail (..),
     Isoparsec (..),
     IsoparsecTry (..),
-    IsoparsecLabel (..),
     konst,
     tsnok,
     cons',
@@ -14,7 +11,6 @@ module Data.Isoparsec.Internal
     siCheck',
     check,
     levitate,
-    siDecompose,
     badKonst,
     badTsnok,
   )
@@ -22,27 +18,24 @@ where
 
 import Control.Arrow.Extra
 import Control.Monad
+import Control.SemiIso as X
 import Data.Isoparsec.Tokenable
 import Numeric.Natural
-import Optics.Iso
 import Prelude as P hiding ((.), id)
 
 class
-  (PolyArrow m SemiIso', ArrowPlus m, ArrowChoice m, IsoparsecTry m, Tokenable s) =>
+  (PolyArrow m SemiIso, ArrowPlus m, ArrowChoice m, IsoparsecTry m, Tokenable s) =>
   Isoparsec m s
     | m -> s where
-
   {-# MINIMAL anyToken, manyTokens, tuck #-}
 
   anyToken :: m () (Token s)
 
   token :: Token s -> m () ()
-
   default token :: Eq (Token s) => Token s -> m () ()
   token x = anyToken >>> tsnok x
 
   tokens :: [Token s] -> m () ()
-
   default tokens :: [Token s] -> m () ()
   tokens [] = arr $ isoConst' () ()
   tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst' ((), ()) ())
@@ -51,7 +44,6 @@ class
   chunk = tokens . lowerTokens
 
   notToken :: Token s -> m () (Token s)
-
   default notToken :: Eq (Token s) => Token s -> m () (Token s)
   notToken t = tokenWhere (/= t)
 
@@ -64,7 +56,6 @@ class
   tokensWhile :: (Token s -> Bool) -> m () s
 
   takeUntil :: s -> m () s
-
   default takeUntil :: Eq (Token s) => s -> m () s
   takeUntil s = takeUntil' s >>^ levitate
     where
@@ -81,7 +72,7 @@ class
   tokensWhile1 :: (Token s -> Bool) -> m () s
   tokensWhile1 f =
     tokenWhere f &&& tokensWhile f
-      >>^ si' (\(a, aa) -> Just $ liftToken a <> aa) levitateHead
+      >>^ SI (\(a, aa) -> pure $ liftToken a <> aa) levitateHead
 
   -- | "tucks" the context of the parser into its input.
   -- >               ┌─────┐
@@ -100,68 +91,59 @@ class
   -- >   └─────┘                          └─────┘
   tuck :: m () a -> m s a
 
-class IsoparsecLabel m l where
-  label :: l -> m a b -> m a b
-
-levitateHead :: Tokenable s => s -> Maybe (Token s, s)
+levitateHead :: Alternative f => Tokenable s => s -> f (Token s, s)
 levitateHead s = case lowerTokens s of
-  (t : tt) -> Just (t, liftTokens tt)
-  [] -> Nothing
+  (t : tt) -> pure (t, liftTokens tt)
+  [] -> empty
 
-cons' :: SemiIso' (t, [t]) [t]
+cons' :: SemiIso (t, [t]) [t]
 cons' =
-  si'
-    (Just . uncurry (:))
+  SI
+    (pure . uncurry (:))
     ( \case
-        (t : ts) -> Just (t, ts)
-        _ -> Nothing
+        (t : ts) -> pure (t, ts)
+        _ -> empty
     )
 
-levitate :: Tokenable s => SemiIso' [Token s] s
+levitate :: Tokenable s => SemiIso [Token s] s
 levitate = siJust liftTokens lowerTokens
 
 class IsoparsecTry m where
   try :: m a b -> m a b
 
 class IsoparsecFail m e where
-  fail :: e -> m a b
+  failure :: e -> m a b
 
-newtype SemiIso' s a = SemiIso' (SemiIso s s a a)
-
-siDecompose :: SemiIso' a b -> (a -> Maybe b, b -> Maybe a)
-siDecompose (SemiIso' s) = withIso s (,)
-
-type SemiIso s t a b = Iso s (Maybe t) (Maybe a) b
-
-si' :: (s -> Maybe a) -> (a -> Maybe s) -> SemiIso' s a
-si' n u = SemiIso' $ iso n u
-
-siCheck' :: (s -> Bool) -> (s -> Maybe a) -> (a -> Maybe s) -> SemiIso' s a
+siCheck' ::
+  (s -> Bool) ->
+  (forall f. AlternativeMonad f => s -> f a) ->
+  (forall f. AlternativeMonad f => a -> f s) ->
+  SemiIso s a
 siCheck' f a b =
-  si'
+  SI
     (\c -> guard (f c) >> a c)
     (b >=> (\c -> guard (f c) >> pure c))
 
-siCheck :: (s -> Bool) -> (s -> a) -> (a -> s) -> SemiIso' s a
-siCheck f a b = siCheck' f (Just . a) (Just . b)
+siCheck :: (s -> Bool) -> (s -> a) -> (a -> s) -> SemiIso s a
+siCheck f a b = siCheck' f (pure . a) (pure . b)
 
-siJust :: (s -> a) -> (a -> s) -> SemiIso' s a
-siJust a b = si' (Just . a) (Just . b)
+siJust :: (s -> a) -> (a -> s) -> SemiIso s a
+siJust a b = SI (pure . a) (pure . b)
 
-isoConst' :: s -> a -> SemiIso' s a
-isoConst' s a = si' (const $ Just a) (const $ Just s)
+isoConst' :: s -> a -> SemiIso s a
+isoConst' s a = SI (const $ pure a) (const $ pure s)
 
-konst :: (PolyArrow a SemiIso', Eq x) => x -> a () x
+konst :: (PolyArrow a SemiIso, Eq x) => x -> a () x
 konst x = badKonst x >>> check (== x)
 
-badKonst :: (PolyArrow a SemiIso') => x -> a () x
-badKonst x = arr $ si' (const $ Just x) (const $ Just ())
+badKonst :: (PolyArrow a SemiIso) => x -> a () x
+badKonst x = arr $ SI (const $ pure x) (const $ pure ())
 
-tsnok :: (PolyArrow a SemiIso', Eq x) => x -> a x ()
+tsnok :: (PolyArrow a SemiIso, Eq x) => x -> a x ()
 tsnok x = check (== x) >>> badTsnok x
 
-badTsnok :: (PolyArrow a SemiIso') => x -> a x ()
-badTsnok x = arr $ si' (const $ Just ()) (const $ Just x)
+badTsnok :: (PolyArrow a SemiIso) => x -> a x ()
+badTsnok x = arr $ SI (const $ pure ()) (const $ pure x)
 
-check :: PolyArrow a SemiIso' => (s -> Bool) -> a s s
+check :: PolyArrow a SemiIso => (s -> Bool) -> a s s
 check f = arr $ siCheck f id id

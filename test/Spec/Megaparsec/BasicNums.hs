@@ -6,6 +6,7 @@ module Spec.Megaparsec.BasicNums
   )
 where
 
+import Control.Lens.TH
 import Data.Either
 import Data.Isoparsec
 import Data.Isoparsec.Char
@@ -13,7 +14,6 @@ import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
 import Data.Void
-import Optics
 import Test.Hspec
 import Test.Tasty
 import Test.Tasty.QuickCheck
@@ -28,8 +28,8 @@ instance Arbitrary Foo where
 
 makePrisms ''Foo
 
-parser :: (Isoparsec m String, IsoparsecLabel m String) => m () Foo
-parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number <?> ("oh no" :: String))
+parser :: (Isoparsec m String) => m () Foo
+parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number)
 
 spec :: Spec
 spec =
