@@ -77,4 +77,3 @@ tests:
     - QuickCheck
     - megaparsec
     - bytestring
-    - word8
