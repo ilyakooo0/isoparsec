@@ -3,13 +3,10 @@ module Data.Isoparsec.Internal
     IsoparsecFail (..),
     Isoparsec (..),
     konst,
-    tsnok,
     siCons,
     isoCheck,
     siCheck,
     check,
-    badKonst,
-    badTsnok,
     unroll,
     arrowsWhile,
   )
@@ -33,7 +30,7 @@ class
 
   token :: Element s -> m () ()
   default token :: Eq (Element s) => Element s -> m () ()
-  token x = anyToken >>^ tsnok x
+  token x = anyToken >>^ turn (konst x)
 
   tokens :: [Element s] -> m () ()
   default tokens :: [Element s] -> m () ()
@@ -115,17 +112,8 @@ isoCheck f a b = siCheck f (pure . a) (pure . b)
 isoConst :: s -> a -> SemiIso s a
 isoConst s a = SI (const $ pure a) (const $ pure s)
 
-konst :: Eq x => x -> SemiIso () x
-konst x = badKonst x >>> check (== x)
-
-badKonst :: x -> SemiIso () x
-badKonst x = SI (const $ pure x) (const $ pure ())
-
-tsnok :: Eq x => x -> SemiIso x ()
-tsnok x = check (== x) >>> badTsnok x
-
-badTsnok :: x -> SemiIso x ()
-badTsnok x = SI (const $ pure ()) (const $ pure x)
-
 check :: (s -> Bool) -> SemiIso s s
 check f = isoCheck f id id
+
+konst :: Eq x => x -> SemiIso () x
+konst x = SI (const $ pure x) (const $ pure ()) >>> check (== x)
