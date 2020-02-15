@@ -34,8 +34,8 @@ parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number)
 spec :: Spec
 spec =
   it "deserializes" $ do
-    runMegaparsec @() parser "12 31" `shouldBe` (Right $ Foo 12 31)
-    runMegaparsec @() parser "1   33" `shouldBe` (Right $ Foo 1 33)
+    runMegaparsec @() parser "12 31" `shouldBe` Right (Foo 12 31)
+    runMegaparsec @() parser "1   33" `shouldBe` Right (Foo 1 33)
     runMegaparsec @() parser "1562" `shouldSatisfy` isLeft
 
 quickSpec :: TestTree
