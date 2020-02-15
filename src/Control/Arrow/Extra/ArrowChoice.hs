@@ -9,9 +9,9 @@ import Control.Arrow.Extra.BaseArrow
 import Control.Category
 import Data.Either
 
-infixl 2 +++
+infixr 2 +++
 
-infixl 2 |||
+infixr 2 |||
 
 class BaseArrow a => ArrowChoice a where
   left :: a b c -> a (Either b d) (Either c d)
