@@ -7,6 +7,8 @@ module Control.SemiIso
     turn,
     withSemiIso,
     AlternativeMonad,
+    maskr,
+    maskl,
   )
 where
 
@@ -82,3 +84,9 @@ withSemiIso ::
   ((a -> f b) -> (b -> f a) -> c) ->
   c
 withSemiIso (SemiIso a b) f = f a b
+
+maskr :: SemiIso a () -> SemiIso a ()
+maskr (SemiIso e p) = SemiIso (\a -> e a <|> pure ()) p
+
+maskl :: SemiIso () b -> SemiIso () b
+maskl (SemiIso e p) = SemiIso e (\b -> p b <|> pure ())

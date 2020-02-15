@@ -100,7 +100,7 @@ instance ToIsoparsec Payload ByteString where
           )
       <+> ( _VersionPayload <.> chunk "SSH-2.0-"
               &&& (tokensWhile (`BS.notElem` " \n\r") >>> utf8)
-              &&& ( (chunk " " >>> takeUntil "\r\n" >>^ turn (badKonst ""))
+              &&& ( (chunk " " >>> takeUntil "\r\n" >>^ (maskr . turn . konst $ ""))
                       <+> chunk "\r\n"
                   )
           )

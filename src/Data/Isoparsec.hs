@@ -2,7 +2,6 @@
 
 module Data.Isoparsec
   ( module X,
-    -- Isoparsec,
     (%>>),
     (%>%),
     (>>%),
@@ -40,7 +39,7 @@ opt :: (ArrowPlus m, PolyArrow m SemiIso) => m () () -> m () ()
 opt m = m <+^ konst ()
 
 opt' :: (ArrowPlus m, PolyArrow m SemiIso, Eq a) => a -> m () a -> m () ()
-opt' a m = (m >>^ tsnok a) <+^ konst ()
+opt' a m = (m >>^ turn (konst a)) <+^ konst ()
 
 repeating :: (PolyArrow m SemiIso, ArrowPlus m, Eq b) => m () b -> m () [b]
 repeating m = (m &&& (repeating m <+^ konst [])) >>^ siCons
@@ -135,8 +134,8 @@ mapIso m = arr $ siMaybe (`M.lookup` n) (`M.lookup` u)
 auto :: forall x s m. (ToIsoparsec x s, Isoparsec m s) => m () x
 auto = toIsoparsec
 
-specific :: forall x s m. (ToIsoparsec x s, Isoparsec m s, Eq x, Show x) => x -> m () ()
-specific x = auto @x >>> check (== x) ^>^ tsnok x
+specific :: forall x s m. (ToIsoparsec x s, Isoparsec m s, Eq x) => x -> m () ()
+specific x = auto @x >>^ turn (konst x)
 
 throughIntegral ::
   (Integral a, Integral b, Num a, Num b, PolyArrow m SemiIso) =>
