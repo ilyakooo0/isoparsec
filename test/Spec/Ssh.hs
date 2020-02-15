@@ -155,10 +155,10 @@ instance ToIsoparsec mac ByteString => ToIsoparsec (Packet mac) ByteString where
   toIsoparsec =
     ( ( (auto @(Byte32 'BE) &&& auto @Byte8)
           >>> (throughIntegral *** throughIntegral)
-          >>> siPure
+          >>^ siPure
             (\(packetL, paddingL) -> (packetL - paddingL - 1, paddingL))
             (\(payloadL, paddingL) -> (payloadL + paddingL + 1, paddingL))
-          ^>> (manyTokens *** throughIntegral)
+          >>> (manyTokens *** throughIntegral)
           >>> (tuck (auto @Payload) *** badZeroPadding)
       )
         &&& auto @mac

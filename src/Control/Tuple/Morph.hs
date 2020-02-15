@@ -60,7 +60,7 @@ data HList (ts :: [*]) where
   HCons :: t -> HList tt -> HList (t ': tt)
   HNil :: HList '[]
 
-infixr 5 :+
+infixl 5 :+
 
 pattern (:+) :: (ts ~ (t : tt)) => t -> HList tt -> HList ts
 pattern (:+) a b = HCons a b
@@ -92,7 +92,7 @@ instance (DroppableList n aa bb) => DroppableList ('S n) (a ': aa) bb where
 
 -- ## Appending
 
-infixr 4 ++:
+infixl 4 ++:
 
 class AppendableList aa bb cc | aa bb -> cc where
   (++:) :: HList aa -> HList bb -> HList (aa ++ bb)

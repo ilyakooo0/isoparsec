@@ -10,13 +10,12 @@ module Control.Arrow.Extra.PolyArrow
 where
 
 import Control.Arrow.Extra.BaseArrow
-import Control.Category
 
-infixr 1 ^>>, >>^
+infixl 1 ^>>, >>^
 
-infixr 1 ^<<, <<^
+infixl 1 ^<<, <<^
 
-infixr 1 ^>^, ^<^
+infixl 1 ^>^, ^<^
 
 class BaseArrow a => PolyArrow a p where
   arr :: p b c -> a b c

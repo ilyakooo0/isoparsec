@@ -34,7 +34,7 @@ opt' a m = (m >>^ turn (konst a)) <+^ konst ()
 repeating :: (PolyArrow m SemiIso, ArrowPlus m, Eq b) => m () b -> m () [b]
 repeating m = (m &&& (repeating m <+^ konst [])) >>^ siCons
 
-infixr 0 <.>
+infixl 0 <.>
 
 (<.>) ::
   (PolyArrow m SemiIso, TupleMorphable x c, TupleMorphable y c) =>
