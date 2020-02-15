@@ -10,7 +10,6 @@ import Control.Arrow.Extra.Orphans ()
 import Control.Monad
 import Data.Functor
 import Data.Isoparsec.Internal as I
-import Data.Isoparsec.Tokenable
 import Text.Megaparsec hiding (Token)
 import qualified Text.Megaparsec as M
 import Prelude hiding ((.))
@@ -28,7 +27,7 @@ instance (MonadParsec e s m) => PolyArrow (Kleisli m) SemiIso where
     Nothing -> M.failure Nothing mempty
 
 instance
-  (MonadParsec e s m, M.Token s ~ Token s, s ~ M.Tokens s, Tokenable s) =>
+  (MonadParsec e s m, M.Token s ~ Element s, s ~ M.Tokens s, IsSequence s) =>
   Isoparsec (Kleisli m) s
   where
   anyToken = Kleisli $ const anySingle
@@ -47,5 +46,5 @@ instance
 instance MonadParsec e s m => IsoparsecFail (Kleisli m) e where
   failure e = Kleisli $ \_ -> customFailure e
 
-instance (MonadParsec e s m, M.Token s ~ Token s, s ~ M.Tokens s) => ArrowPlus (Kleisli m) where
+instance (MonadParsec e s m, M.Token s ~ Element s, s ~ M.Tokens s) => ArrowPlus (Kleisli m) where
   (Kleisli lhs) <+> (Kleisli rhs) = Kleisli $ \x -> try (lhs x) <|> rhs x

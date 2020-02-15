@@ -33,18 +33,17 @@ import Data.Coerce
 import Data.Either
 import Data.Isoparsec.Internal as X
 import Data.Isoparsec.ToIsoparsec as X
-import Data.Isoparsec.Tokenable as X
 import qualified Data.Map as M
 import Prelude hiding ((.), fail, id)
 
 opt :: (ArrowPlus m, PolyArrow m SemiIso) => m () () -> m () ()
-opt m = m <+> konst ()
+opt m = m <+^ konst ()
 
 opt' :: (ArrowPlus m, PolyArrow m SemiIso, Eq a) => a -> m () a -> m () ()
-opt' a m = (m >>> tsnok a) <+> konst ()
+opt' a m = (m >>^ tsnok a) <+^ konst ()
 
 repeating :: (PolyArrow m SemiIso, ArrowPlus m, Eq b) => m () b -> m () [b]
-repeating m = (m &&& (repeating m <+> konst [])) >>^ siCons
+repeating m = (m &&& (repeating m <+^ konst [])) >>^ siCons
 
 infixr 1 %>>
 
@@ -109,8 +108,8 @@ infixr 0 <^>
   m x' y'
 b <^> p = b >>> morphed %>% p
 
-coercing :: forall b a m. (Coercible a b, PolyArrow m SemiIso) => m a b
-coercing = arr $ siPure coerce coerce
+coercing :: forall b a. Coercible a b => SemiIso a b
+coercing = siPure coerce coerce
 
 morphed ::
   (TupleMorphable a c, TupleMorphable b c) => SemiIso a b
@@ -137,7 +136,7 @@ auto :: forall x s m. (ToIsoparsec x s, Isoparsec m s) => m () x
 auto = toIsoparsec
 
 specific :: forall x s m. (ToIsoparsec x s, Isoparsec m s, Eq x, Show x) => x -> m () ()
-specific x = auto @x >>> check (== x) >>> tsnok x
+specific x = auto @x >>> check (== x) ^>^ tsnok x
 
 throughIntegral ::
   (Integral a, Integral b, Num a, Num b, PolyArrow m SemiIso) =>

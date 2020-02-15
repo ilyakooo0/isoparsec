@@ -5,11 +5,10 @@ where
 
 import Control.Arrow.Extra
 import Data.Isoparsec.Internal
-import Data.Isoparsec.Tokenable
 import GHC.Generics
 import Prelude hiding ((.))
 
-instance {-# OVERLAPPABLE #-} t ~ Token s => ToIsoparsec t s where
+instance {-# OVERLAPPABLE #-} t ~ Element s => ToIsoparsec t s where
   toIsoparsec = anyToken
 
 class ToIsoparsec a s where
@@ -21,7 +20,7 @@ class GToIsoparsec a s where
   gToIsoparsec :: Isoparsec m s => m () (a b)
 
 instance GToIsoparsec U1 s where
-  gToIsoparsec = konst U1
+  gToIsoparsec = arr $ konst U1
 
 instance ToIsoparsec c s => GToIsoparsec (K1 i c) s where
   gToIsoparsec =

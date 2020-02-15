@@ -75,8 +75,9 @@ roundtrip ::
   ( ToIsoparsec x s,
     Stream s,
     Show s,
-    I.Token s ~ M.Token s,
+    I.Element s ~ M.Token s,
     Eq x,
+    Eq s,
     Isoparsec (Kleisli (Parsec Void s)) s
   ) =>
   x ->

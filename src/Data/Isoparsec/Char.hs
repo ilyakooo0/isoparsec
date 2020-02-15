@@ -11,16 +11,16 @@ import Data.Isoparsec
 import Text.Read
 import Prelude hiding ((.), id)
 
-space :: (Isoparsec m s, Token s ~ Char) => m () ()
+space :: (Isoparsec m s, Element s ~ Char) => m () ()
 space = token ' '
 
-unsafeWhiteSpace :: (Isoparsec m s, Token s ~ Char) => m () ()
-unsafeWhiteSpace = tokensWhile isSpace >>> badTsnok mempty
+unsafeWhiteSpace :: (Isoparsec m s, Element s ~ Char) => m () ()
+unsafeWhiteSpace = tokensWhile isSpace >>^ badTsnok mempty
 
-unsafeWhiteSpace1 :: (Isoparsec m s, Token s ~ Char) => m () ()
-unsafeWhiteSpace1 = tokensWhile1 isSpace >>> badTsnok (liftToken ' ')
+unsafeWhiteSpace1 :: (Isoparsec m s, Element s ~ Char) => m () ()
+unsafeWhiteSpace1 = tokensWhile1 isSpace >>^ badTsnok (singleton ' ')
 
-number :: (Isoparsec m s, Token s ~ Char) => m () Integer
+number :: (Isoparsec m s, Element s ~ Char) => m () Integer
 number =
   tokensWhile1 (\c -> isNumber c || c == '+' || c == '-')
-    >>^ siMaybe (readMaybe @Integer . lowerTokens) (Just . liftTokens . show)
+    >>^ siMaybe (readMaybe @Integer . otoList) (Just . fromList . show)

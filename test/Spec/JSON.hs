@@ -62,13 +62,13 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
                         &&& repeating
                           ( (token ',' &&& unsafeWhiteSpace &&& json) >>% morphed
                           )
-                        <+> konst []
+                        <+^ konst []
                     )
                       >>% morphed
                   )
                     >>^ siCons
                 )
-                  <+> konst []
+                  <+^ konst []
               )
           &&& unsafeWhiteSpace
           &&& token ']'
@@ -76,9 +76,9 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
     object =
       _Object <.> token '{' &&& unsafeWhiteSpace
         &&& ( ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>^ morphed
-                 in (pair &&& (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+> konst [])) >>^ siCons
+                 in (pair &&& (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+^ konst [])) >>^ siCons
               )
-                <+> konst []
+                <+^ konst []
             )
         &&& unsafeWhiteSpace
         &&& token '}'
