@@ -7,9 +7,9 @@ where
 
 import Control.Category
 
-infixl 3 ***
+infixr 3 ***
 
-infixl 3 &&&
+infixr 3 &&&
 
 class Category a => BaseArrow a where
   {-# MINIMAL (***), (&&&) #-}
