@@ -60,11 +60,11 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
           &&& unsafeWhiteSpace
           &&& ( ( ( ( json &&& unsafeWhiteSpace
                         &&& repeating
-                          ( (token ',' &&& unsafeWhiteSpace &&& json) >>% morphed
+                          ( (token ',' &&& unsafeWhiteSpace &&& json) >>^ morphed
                           )
                         <+^ konst []
                     )
-                      >>% morphed
+                      >>^ morphed
                   )
                     >>^ siCons
                 )
