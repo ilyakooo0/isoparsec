@@ -2,6 +2,7 @@
 
 module Data.Isoparsec
   ( module X,
+    (<.>),
     repeating,
     opt,
     opt',
