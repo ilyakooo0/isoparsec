@@ -85,3 +85,18 @@
   - -XTypeOperators
   - -XUndecidableInstances
   - -XRankNTypes
+
+- fixity: "infixr 5 <+^"
+- fixity: "infixr 5 ^+>"
+- fixity: "infixr 5 ^+^"
+- fixity: "infixr 2 +++"
+- fixity: "infixr 2 |||"
+- fixity: "infixr 5 <+>"
+- fixity: "infixr 3 ***"
+- fixity: "infixr 3 &&&"
+- fixity: "infixr 1 ^>>"
+- fixity: "infixr 1 >>^"
+- fixity: "infixr 1 ^<<"
+- fixity: "infixr 1 <<^"
+- fixity: "infixr 1 ^>^"
+- fixity: "infixr 1 ^<^"
