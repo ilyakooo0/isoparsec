@@ -9,6 +9,7 @@ where
 import Control.Lens.TH
 import Data.ByteString as BS
 import qualified Data.Char as C
+import Data.Either
 import Data.Isoparsec
 import Data.Isoparsec.ByteString
 import GHC.Generics
@@ -98,10 +99,9 @@ instance ToIsoparsec Payload ByteString where
               &&& auto @SSHString
           )
       <+> ( _VersionPayload <.> chunk "SSH-2.0-"
-              &&& ( (tokensWhile (not . flip BS.elem " \n\r") >>> utf8)
-                      &&& ( (chunk " " >>> takeUntil "\r\n" >>^ turn (badKonst ""))
-                              <+> chunk "\r\n"
-                          )
+              &&& (tokensWhile (`BS.notElem` " \n\r") >>> utf8)
+              &&& ( (chunk " " >>> takeUntil "\r\n" >>^ turn (badKonst ""))
+                      <+> chunk "\r\n"
                   )
           )
       <+> (_IgnorePayload <.> specific IgnoreMsg &&& tokensWhile (const True))
@@ -169,7 +169,9 @@ spec :: Spec
 spec = do
   it "deserialize payload" $ do
     "SSH-2.0-TesT\r\n" `shouldParseBS` VersionPayload "TesT"
+    "SSH-2.0-TesT" `parseSatisfyBS` isLeft @_ @Payload
     "SSH-2.0-TesT random comment\r\n" `shouldParseBS` VersionPayload "TesT"
+    "SSH-2.0-TesT random comment" `parseSatisfyBS` isLeft @_ @Payload
     "\x2__" `shouldParseBS` IgnorePayload "__"
     "\x5\0\0\0\x6tested" `shouldParseBS` ServiceRequest (SSHString "tested")
   it "deserialize packet" $ do
