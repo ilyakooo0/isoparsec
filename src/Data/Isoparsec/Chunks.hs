@@ -12,4 +12,4 @@ newtype Chunk (n :: Nat) s = Chunk {unChunk :: s}
 
 instance (CmpNat n 0 ~ 'GT, KnownNat n) => ToIsoparsec (Chunk n s) s where
   toIsoparsec =
-    konst (fromIntegral $ natVal @n Proxy) >>> manyTokens >>> coercing
+    konst (fromIntegral $ natVal @n Proxy) ^>> manyTokens >>^ coercing

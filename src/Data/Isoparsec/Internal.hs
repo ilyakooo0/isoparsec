@@ -8,7 +8,6 @@ module Data.Isoparsec.Internal
     isoCheck,
     siCheck,
     check,
-    levitate,
     badKonst,
     badTsnok,
     unroll,
@@ -18,61 +17,53 @@ where
 
 import Control.Arrow.Extra
 import Control.Monad
-import Control.SemiIso as X
-import Data.Isoparsec.Tokenable
+import Control.SemiIso as X hiding (filterM, replicateM)
+import Data.MonoTraversable as X
+import Data.Sequences as X
 import Numeric.Natural
 import Prelude as P hiding ((.), id)
 
 class
-  (PolyArrow m SemiIso, ArrowPlus m, ArrowChoice m, Tokenable s) =>
+  (PolyArrow m SemiIso, ArrowPlus m, ArrowChoice m, IsSequence s) =>
   Isoparsec m s
     | m -> s where
   {-# MINIMAL anyToken, manyTokens, tuck #-}
 
-  anyToken :: m () (Token s)
+  anyToken :: m () (Element s)
 
-  token :: Token s -> m () ()
-  default token :: Eq (Token s) => Token s -> m () ()
-  token x = anyToken >>> tsnok x
+  token :: Element s -> m () ()
+  default token :: Eq (Element s) => Element s -> m () ()
+  token x = anyToken >>^ tsnok x
 
-  tokens :: [Token s] -> m () ()
-  default tokens :: [Token s] -> m () ()
+  tokens :: [Element s] -> m () ()
+  default tokens :: [Element s] -> m () ()
   tokens [] = arr $ isoConst () ()
   tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst ((), ()) ())
 
   chunk :: s -> m () ()
-  chunk = tokens . lowerTokens
+  chunk = tokens . otoList
 
-  notToken :: Token s -> m () (Token s)
-  default notToken :: Eq (Token s) => Token s -> m () (Token s)
+  notToken :: Element s -> m () (Element s)
+  default notToken :: Eq (Element s) => Element s -> m () (Element s)
   notToken t = tokenWhere (/= t)
 
-  tokenWhere :: (Token s -> Bool) -> m () (Token s)
-  tokenWhere f =
-    anyToken >>> check f
+  tokenWhere :: (Element s -> Bool) -> m () (Element s)
+  tokenWhere f = anyToken >>^ check f
 
   manyTokens :: m Natural s
 
-  tokensWhile :: (Token s -> Bool) -> m () s
-
   takeUntil :: s -> m () s
-  default takeUntil :: Eq (Token s) => s -> m () s
-  takeUntil s = takeUntil' s >>^ levitate
-    where
-      takeUntil' s' = (chunk s' >>> konst []) <+> ((anyToken &&& takeUntil' s') >>^ siCons)
+  default takeUntil :: Eq s => s -> m () s
+  takeUntil s = (chunk s >>^ konst mempty) <+> ((anyToken &&& takeUntil s) >>^ siCons)
 
-  default tokensWhile :: (Token s -> Bool) -> m () s
+  tokensWhile :: (Element s -> Bool) -> m () s
+  default tokensWhile :: (Element s -> Bool) -> m () s
   tokensWhile f =
-    tokensWhile' f >>> check (P.all f) >>^ levitate
-    where
-      tokensWhile' g =
-        (tokenWhere g &&& tokensWhile' g >>^ siCons)
-          <+^ isoConst () []
+    (((tokenWhere f >>^ check f) &&& tokensWhile f) >>^ siCons)
+      <+^ isoConst () mempty
 
-  tokensWhile1 :: (Token s -> Bool) -> m () s
-  tokensWhile1 f =
-    tokenWhere f &&& tokensWhile f
-      >>^ SI (\(a, aa) -> pure $ liftToken a <> aa) levitateHead
+  tokensWhile1 :: (Element s -> Bool) -> m () s
+  tokensWhile1 f = tokenWhere f &&& tokensWhile f >>^ siCons
 
   -- | "tucks" the context of the parser into its input.
   -- >               ┌─────┐
@@ -95,26 +86,15 @@ arrowsWhile :: (PolyArrow m SemiIso, ArrowPlus m) => m () a -> m () [a]
 arrowsWhile f = ((f &&& arrowsWhile f) >>^ siCons) <+^ isoConst () []
 
 unroll :: (PolyArrow m SemiIso, ArrowPlus m, Eq a) => a -> m a (b, a) -> m () [b]
-unroll a f = (konst a >>> unroll' f) <+^ isoConst () []
+unroll a f = (konst a ^>> unroll' f) <+^ isoConst () []
   where
     unroll' g = (g >>> second (unroll' g)) >>^ siCons
 
-levitateHead :: Alternative f => Tokenable s => s -> f (Token s, s)
-levitateHead s = case lowerTokens s of
-  (t : tt) -> pure (t, liftTokens tt)
-  [] -> empty
-
-siCons :: SemiIso (t, [t]) [t]
+siCons :: IsSequence s => SemiIso (Element s, s) s
 siCons =
-  SI
-    (pure . uncurry (:))
-    ( \case
-        (t : ts) -> pure (t, ts)
-        _ -> empty
-    )
-
-levitate :: Tokenable s => SemiIso [Token s] s
-levitate = siPure liftTokens lowerTokens
+  siMaybe
+    (pure . uncurry cons)
+    uncons
 
 class IsoparsecFail m e where
   failure :: e -> m a b
@@ -135,17 +115,17 @@ isoCheck f a b = siCheck f (pure . a) (pure . b)
 isoConst :: s -> a -> SemiIso s a
 isoConst s a = SI (const $ pure a) (const $ pure s)
 
-konst :: (PolyArrow a SemiIso, Eq x) => x -> a () x
-konst x = badKonst x ^>> check (== x)
+konst :: Eq x => x -> SemiIso () x
+konst x = badKonst x >>> check (== x)
 
 badKonst :: x -> SemiIso () x
 badKonst x = SI (const $ pure x) (const $ pure ())
 
-tsnok :: (PolyArrow a SemiIso, Eq x) => x -> a x ()
+tsnok :: Eq x => x -> SemiIso x ()
 tsnok x = check (== x) >>> badTsnok x
 
-badTsnok :: (PolyArrow a SemiIso) => x -> a x ()
-badTsnok x = arr $ SI (const $ pure ()) (const $ pure x)
+badTsnok :: x -> SemiIso x ()
+badTsnok x = SI (const $ pure ()) (const $ pure x)
 
-check :: PolyArrow a SemiIso => (s -> Bool) -> a s s
-check f = arr $ isoCheck f id id
+check :: (s -> Bool) -> SemiIso s s
+check f = isoCheck f id id

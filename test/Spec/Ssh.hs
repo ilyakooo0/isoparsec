@@ -137,7 +137,7 @@ data NoneMAC = NoneMAC
   deriving (Eq, Ord, Show, Generic)
 
 instance ToIsoparsec NoneMAC b where
-  toIsoparsec = konst NoneMAC
+  toIsoparsec = arr $ konst NoneMAC
 
 instance Arbitrary NoneMAC where
   arbitrary = return NoneMAC
