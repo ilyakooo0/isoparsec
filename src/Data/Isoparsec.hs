@@ -2,17 +2,6 @@
 
 module Data.Isoparsec
   ( module X,
-    (%>>),
-    (%>%),
-    (>>%),
-    (%<<),
-    (%<%),
-    (<<%),
-    (<+%),
-    (%+>),
-    (%+%),
-    (<.>),
-    (<^>),
     repeating,
     opt,
     opt',
@@ -44,51 +33,6 @@ opt' a m = (m >>^ turn (konst a)) <+^ konst ()
 repeating :: (PolyArrow m SemiIso, ArrowPlus m, Eq b) => m () b -> m () [b]
 repeating m = (m &&& (repeating m <+^ konst [])) >>^ siCons
 
-infixr 1 %>>
-
-(%>>) :: (PolyArrow a SemiIso, ToSemiIso p b c) => p -> a c d -> a b d
-p %>> a = si p ^>> a
-
-infixr 1 %>%
-
-(%>%) :: (PolyArrow a SemiIso, ToSemiIso p b c, ToSemiIso p' c d) => p -> p' -> a b d
-p %>% a = si p ^>^ si a
-
-infixr 1 >>%
-
-(>>%) :: (PolyArrow a SemiIso, ToSemiIso p c d) => a b c -> p -> a b d
-p >>% a = p >>^ si a
-
-infixr 1 %<<
-
-(%<<) :: (PolyArrow a SemiIso, ToSemiIso p c d) => p -> a b c -> a b d
-p %<< a = si p ^<< a
-
-infixr 1 %<%
-
-(%<%) :: (PolyArrow a SemiIso, ToSemiIso p c d, ToSemiIso p' b c) => p -> p' -> a b d
-p %<% a = si p ^<^ si a
-
-infixr 1 <<%
-
-(<<%) :: (PolyArrow a SemiIso, ToSemiIso p b c) => a c d -> p -> a b d
-p <<% a = p <<^ si a
-
-infixr 5 <+%
-
-(<+%) :: (PolyArrow a SemiIso, ArrowPlus a, ToSemiIso p b c) => a b c -> p -> a b c
-a <+% b = a <+^ si b
-
-infixr 5 %+>
-
-(%+>) :: (PolyArrow a SemiIso, ArrowPlus a, ToSemiIso p b c) => p -> a b c -> a b c
-a %+> b = si a ^+> b
-
-infixr 5 %+%
-
-(%+%) :: (PolyArrow a SemiIso, ArrowPlus a, ToSemiIso p b c) => p -> p -> a b c
-a %+% b = si a ^+^ si b
-
 infixr 0 <.>
 
 (<.>) ::
@@ -97,15 +41,6 @@ infixr 0 <.>
   m x' x ->
   m x' y'
 b <.> p = (p >>^ morphed) >>^ si b
-
-infixr 0 <^>
-
-(<^>) ::
-  (PolyArrow m SemiIso, TupleMorphable x c, TupleMorphable y c, ToSemiIso b y y') =>
-  m x' x ->
-  b ->
-  m x' y'
-b <^> p = b >>> morphed %>% p
 
 coercing :: forall b a. Coercible a b => SemiIso a b
 coercing = siPure coerce coerce
