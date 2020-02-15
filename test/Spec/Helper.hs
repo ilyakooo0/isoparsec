@@ -1,6 +1,7 @@
 module Spec.Helper
   ( shouldParseBS,
     roundtrip,
+    parseSatisfyBS,
   )
 where
 
@@ -16,6 +17,31 @@ import Test.Hspec
 import Test.Tasty.QuickCheck
 import Text.Megaparsec as M
 import Prelude as P hiding ((.))
+
+parseSatisfy ::
+  forall x s.
+  ( ToIsoparsec x s,
+    Stream s,
+    Show x,
+    Show (M.Token s),
+    Show s,
+    Isoparsec (Kleisli (Parsec Void s)) s
+  ) =>
+  s ->
+  (Either (ParseErrorBundle s Void) x -> Bool) ->
+  Expectation
+parseSatisfy s p = runMegaparsec @Void @s toIsoparsec s `shouldSatisfy` p
+
+parseSatisfyBS ::
+  forall x.
+  ( ToIsoparsec x ByteString,
+    Show x,
+    Isoparsec (Kleisli (Parsec Void ByteString)) ByteString
+  ) =>
+  ByteString ->
+  (Either (ParseErrorBundle ByteString Void) x -> Bool) ->
+  Expectation
+parseSatisfyBS = parseSatisfy
 
 shouldParse ::
   forall x s.
