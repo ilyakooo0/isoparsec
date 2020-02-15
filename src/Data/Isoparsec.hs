@@ -2,7 +2,6 @@
 
 module Data.Isoparsec
   ( module X,
-    -- Isoparsec,
     (%>>),
     (%>%),
     (>>%),
