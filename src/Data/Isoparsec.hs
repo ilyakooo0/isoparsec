@@ -42,6 +42,8 @@ infixr 0 <.>
   m x' x ->
   m x' y'
 b <.> p = (p >>^ morphed) >>^ si b
+  where
+    si p' = withPrism p' $ \x y -> SemiIso (pure . x) (either (const empty) pure . y)
 
 coercing :: forall b a. Coercible a b => SemiIso a b
 coercing = siPure coerce coerce
@@ -49,15 +51,6 @@ coercing = siPure coerce coerce
 morphed ::
   (TupleMorphable a c, TupleMorphable b c) => SemiIso a b
 morphed = siPure morphTuples morphTuples
-
-class ToSemiIso x a b | x -> a b where
-  si :: x -> SemiIso a b
-
-instance ToSemiIso (Market a a a (Identity a) -> Market a a b (Identity b)) a b where
-  si p = withPrism p $ \x y -> SemiIso (pure . x) (either (const empty) pure . y)
-
-instance ToSemiIso (SemiIso a b) a b where
-  si = id
 
 mapIso :: (PolyArrow m SemiIso, Ord a, Ord b) => [(a, b)] -> m a b
 mapIso m = arr $ siMaybe (`M.lookup` n) (`M.lookup` u)
