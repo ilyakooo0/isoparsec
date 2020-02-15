@@ -1,7 +1,6 @@
 module Spec.Helper
   ( shouldParseBS,
     roundtrip,
-    parseSatisfy,
     parseSatisfyBS,
   )
 where
