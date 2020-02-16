@@ -25,9 +25,9 @@ newtype SingleDigit = SingleDigit {unSingleDigit :: String}
 instance ToIsoparsec SingleDigit String where
   toIsoparsec =
     toIsoparsec @(Chunk 1 String)
-      >>> coercing
-      ^>> check (all @[] isDigit)
-      ^>^ coercing
+      >>^ coercing
+      >>^ check (all @[] isDigit)
+      >>^ coercing
 
 instance (Arbitrary SingleDigit) where
   arbitrary = SingleDigit . pure <$> elements ['0' .. '9']

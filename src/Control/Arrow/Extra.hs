@@ -14,13 +14,13 @@ import Control.Arrow.Extra.ArrowPlus as X
 import Control.Arrow.Extra.ArrowZero as X
 import Control.Arrow.Extra.BaseArrow as X
 import Control.Arrow.Extra.PolyArrow as X
-import Control.Category as X
+import Control.Category as X hiding ((<<<), (>>>))
 
-infixr 5 <+^
+infixl 5 <+^
 
-infixr 5 ^+>
+infixl 5 ^+>
 
-infixr 5 ^+^
+infixl 5 ^+^
 
 (<+^) :: (ArrowPlus a, PolyArrow a p) => a b c -> p b c -> a b c
 a <+^ b = a <+> arr b

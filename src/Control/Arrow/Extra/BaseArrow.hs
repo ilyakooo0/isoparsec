@@ -2,14 +2,16 @@
 
 module Control.Arrow.Extra.BaseArrow
   ( BaseArrow (..),
+    (>>>),
+    (<<<),
   )
 where
 
-import Control.Category
+import Control.Category hiding ((<<<), (>>>))
 
-infixr 3 ***
+infixl 3 ***
 
-infixr 3 &&&
+infixl 3 &&&
 
 class Category a => BaseArrow a where
   {-# MINIMAL (***), (&&&) #-}
@@ -23,3 +25,13 @@ class Category a => BaseArrow a where
   (***) :: a b c -> a b' c' -> a (b, b') (c, c')
 
   (&&&) :: a b c -> a b c' -> a b (c, c')
+
+infixl 1 >>>
+
+(>>>) :: Category cat => cat a b -> cat b c -> cat a c
+x >>> y = y . x
+
+infixl 1 <<<
+
+(<<<) :: Category cat => cat b c -> cat a b -> cat a c
+x <<< y = x . y

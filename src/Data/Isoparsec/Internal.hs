@@ -35,7 +35,7 @@ class
   tokens :: [Element s] -> m () ()
   default tokens :: [Element s] -> m () ()
   tokens [] = arr $ isoConst () ()
-  tokens (t : ts) = token t &&& tokens ts >>> arr (isoConst ((), ()) ())
+  tokens (t : ts) = token t &&& tokens ts >>^ isoConst ((), ()) ()
 
   chunk :: s -> m () ()
   chunk = tokens . otoList
@@ -116,4 +116,4 @@ check :: (s -> Bool) -> SemiIso s s
 check f = isoCheck f id id
 
 konst :: Eq x => x -> SemiIso () x
-konst x = SI (const $ pure x) (const $ pure ()) >>> check (== x)
+konst x = isoConst () x >>> check (== x)

@@ -84,8 +84,9 @@ newtype SSHString = SSHString {unSSHString :: String}
 
 instance ToIsoparsec SSHString ByteString where
   toIsoparsec =
-    auto @(Byte32 'BE) >>> coercing @Word32
-      ^>> siPure fromIntegral fromIntegral
-      ^>> manyTokens
+    auto @(Byte32 'BE)
+      >>^ coercing @Word32
+      >>^ siPure fromIntegral fromIntegral
+      >>> manyTokens
       >>> utf8
       >>^ siPure SSHString unSSHString

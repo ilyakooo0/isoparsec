@@ -86,17 +86,84 @@
   - -XUndecidableInstances
   - -XRankNTypes
 
-- fixity: "infixr 5 <+^"
-- fixity: "infixr 5 ^+>"
-- fixity: "infixr 5 ^+^"
-- fixity: "infixr 2 +++"
-- fixity: "infixr 2 |||"
-- fixity: "infixr 5 <+>"
-- fixity: "infixr 3 ***"
-- fixity: "infixr 3 &&&"
-- fixity: "infixr 1 ^>>"
-- fixity: "infixr 1 >>^"
-- fixity: "infixr 1 ^<<"
-- fixity: "infixr 1 <<^"
-- fixity: "infixr 1 ^>^"
-- fixity: "infixr 1 ^<^"
+# hints found in src/Control/SemiIso.hs
+- warn: {lhs: "SI (pure . a) (pure . b)", rhs: "siPure a b"}
+- warn: {lhs: "SemiIso (pure . a) (pure . b)", rhs: "siPure a b"}
+- warn: {lhs: "SemiIso (const empty) (const empty)", rhs: "zeroArrow"}
+
+# hints found in src/Control/Arrow/Extra.hs
+- fixity: "infixl 5 <+^"
+- fixity: "infixl 5 ^+>"
+- fixity: "infixl 5 ^+^"
+- warn: {lhs: "a <+> arr b", rhs: "a <+^ b"}
+- warn: {lhs: "arr a <+> b", rhs: "a ^+> b"}
+- warn: {lhs: "arr a <+> arr b", rhs: "a ^+^ b"}
+
+# hints found in src/Control/Arrow/Extra/ArrowChoice.hs
+- fixity: "infixl 2 +++"
+- fixity: "infixl 2 |||"
+
+# hints found in src/Control/Arrow/Extra/ArrowPlus.hs
+- fixity: "infixl 5 <+>"
+
+# hints found in src/Control/Arrow/Extra/ArrowZero.hs
+# no hints found
+
+# hints found in src/Control/Arrow/Extra/BaseArrow.hs
+- fixity: "infixl 3 ***"
+- fixity: "infixl 3 &&&"
+- fixity: "infixl 1 >>>"
+- fixity: "infixl 1 <<<"
+
+# hints found in src/Control/Arrow/Extra/Orphans.hs
+# no hints found
+
+# hints found in src/Control/Arrow/Extra/PolyArrow.hs
+- fixity: "infixl 1 ^>>"
+- fixity: "infixl 1 >>^"
+- fixity: "infixl 1 ^<<"
+- fixity: "infixl 1 <<^"
+- fixity: "infixl 1 ^>^"
+- fixity: "infixl 1 ^<^"
+- warn: {lhs: "arr a >>> arr b", rhs: "a ^>^ b"}
+- warn: {lhs: "arr a <<< arr b", rhs: "a ^<^ b"}
+- warn: {lhs: "arr a >>> b", rhs: "a ^>> b"}
+- warn: {lhs: "a >>> arr b", rhs: "a >>^ b"}
+- warn: {lhs: "a <<< arr b", rhs: "a <<^ b"}
+- warn: {lhs: "arr a <<< b", rhs: "a ^<< b"}
+
+# hints found in src/Data/Isoparsec.hs
+- warn: {lhs: "a <+^ konst ()", rhs: "opt a"}
+- warn: {lhs: "(b >>^ turn (konst a)) <+^ konst ()", rhs: "opt' a b"}
+- warn: {lhs: "(a &&& (repeating a <+^ konst [])) >>^ siCons", rhs: "repeating a"}
+- fixity: "infixl 0 <.>"
+- warn: {lhs: "(b >>^ morphed) >>^ si a", rhs: "a <.> b"}
+- warn: {lhs: "siPure coerce coerce", rhs: "coercing"}
+- warn: {lhs: "siPure morphTuples morphTuples", rhs: "morphed"}
+- warn: {lhs: "auto @x >>^ turn (konst a)", rhs: "specific a"}
+- warn: {lhs: "arr (siPure fromIntegral fromIntegral)", rhs: "throughIntegral"}
+
+# hints found in src/Data/Isoparsec/ByteString.hs
+- warn: {lhs: "arr (siPure C.unpack C.pack)", rhs: "utf8"}
+- warn: {lhs: "bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte16 e) @Word16", rhs: "toIsoparsec"}
+- warn: {lhs: "bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte32 e) @Word32", rhs: "toIsoparsec"}
+- warn: {lhs: "bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte64 e) @Word64", rhs: "toIsoparsec"}
+- warn: {lhs: "anyToken >>> mapIso [(0, False), (1, True)]", rhs: "toIsoparsec"}
+
+# hints found in src/Data/Isoparsec/Char.hs
+- warn: {lhs: "token ' '", rhs: "space"}
+- warn: {lhs: "tokensWhile isSpace >>^ ((maskr . turn . konst) mempty)", rhs: "unsafeWhiteSpace"}
+- warn: {lhs: "tokensWhile1 isSpace >>^ ((maskr . turn . konst) (singleton ' '))", rhs: "unsafeWhiteSpace1"}
+
+# hints found in src/Data/Isoparsec/Cokleisli.hs
+- warn: {lhs: "Cokleisli\n  (\\ t ->\n     case project a t of\n         Just x -> return x\n         Nothing -> mzero)", rhs: "arr a"}
+- warn: {lhs: "Cokleisli (const mzero)", rhs: "zeroArrow"}
+
+# hints found in src/Data/Isoparsec/Internal.hs
+- warn: {lhs: "((a &&& arrowsWhile a) >>^ siCons) <+^ isoConst () []", rhs: "arrowsWhile a"}
+- warn: {lhs: "siMaybe (pure . uncurry cons) uncons", rhs: "siCons"}
+- warn: {lhs: "SI (\\ c -> guard (a c) >> b c)\n  (c >=> (\\ c -> guard (a c) >> pure c))", rhs: "siCheck a b c"}
+- warn: {lhs: "siCheck a (pure . b) (pure . c)", rhs: "isoCheck a b c"}
+- warn: {lhs: "SI (const (pure b)) (const (pure a))", rhs: "isoConst a b"}
+- warn: {lhs: "isoCheck a id id", rhs: "check a"}
+- warn: {lhs: "SI (const (pure a)) (const (pure ())) >>> check (== a)", rhs: "konst a"}

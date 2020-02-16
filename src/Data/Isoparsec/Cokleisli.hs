@@ -26,10 +26,8 @@ instance (Alternative m, Monad m) => BaseArrow (Cokleisli m) where
   (Cokleisli cb) &&& (Cokleisli c'b) = Cokleisli $
     \(c, c') -> c'b c' >> cb c
 
-instance MonadPlus m => PolyArrow (Cokleisli m) SemiIso where
-  arr si = Cokleisli $ \t -> case project si t of
-    Just x -> return x
-    Nothing -> mzero
+instance (Alternative m, Monad m) => PolyArrow (Cokleisli m) SemiIso where
+  arr si = Cokleisli $ \t -> project si t
 
 instance MonadPlus m => ArrowZero (Cokleisli m) where
   zeroArrow = Cokleisli $ const mzero
