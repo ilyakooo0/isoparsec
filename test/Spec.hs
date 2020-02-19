@@ -10,6 +10,7 @@ main = do
   bsicNumSpec <- testSpec "Basic megaparsec test" BasicNums.spec
   twoDigitsSpec <- testSpec "Two digits test" TwoDigits.spec
   sshSpec <- testSpec "ssh spec" Ssh.spec
+  jsonSpec <- testSpec "json spec" JSON.spec
   defaultMain
     ( testGroup
         "tests"
@@ -20,7 +21,8 @@ main = do
             ],
           testGroup
             "JSON"
-            [ JSON.quickSpec
+            [ jsonSpec,
+              JSON.quickSpec
             ],
           testGroup
             "TwoDigits"
