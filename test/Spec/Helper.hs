@@ -2,7 +2,6 @@ module Spec.Helper
   ( shouldParseBS,
     roundtrip,
     parseSatisfyBS,
-    parseSatisfyS,
     shouldParseS,
   )
 where
@@ -44,17 +43,6 @@ parseSatisfyBS ::
   (Either (ParseErrorBundle ByteString Void) x -> Bool) ->
   Expectation
 parseSatisfyBS = parseSatisfy
-
-parseSatisfyS ::
-  forall x.
-  ( ToIsoparsec x ByteString,
-    Show x,
-    Isoparsec (Kleisli (Parsec Void ByteString)) ByteString
-  ) =>
-  ByteString ->
-  (Either (ParseErrorBundle ByteString Void) x -> Bool) ->
-  Expectation
-parseSatisfyS = parseSatisfy
 
 shouldParse ::
   forall x s.
