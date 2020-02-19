@@ -9,6 +9,8 @@ module Data.Isoparsec.Internal
     check,
     unroll,
     arrowsWhile,
+    assoc,
+    arrowsUntil,
   )
 where
 
@@ -82,6 +84,9 @@ class
 arrowsWhile :: (PolyArrow m SemiIso, ArrowPlus m) => m () a -> m () [a]
 arrowsWhile f = ((f &&& arrowsWhile f) >>^ siCons) <+^ isoConst () []
 
+arrowsUntil :: (ArrowPlus m, Eq a, PolyArrow m SemiIso) => m () a -> m () b -> m () ([a], b)
+arrowsUntil a b = (arr (konst []) &&& b) <+> (a &&& arrowsUntil a b >>^ (assoc >>> first siCons))
+
 unroll :: (PolyArrow m SemiIso, ArrowPlus m, Eq a) => a -> m a (b, a) -> m () [b]
 unroll a f = (konst a ^>> unroll' f) <+^ isoConst () []
   where
@@ -117,3 +122,6 @@ check f = isoCheck f id id
 
 konst :: Eq x => x -> SemiIso () x
 konst x = isoConst () x >>> check (== x)
+
+assoc :: SemiIso (a, (b, c)) ((a, b), c)
+assoc = siPure (\(a, (b, c)) -> ((a, b), c)) (\((a, b), c) -> (a, (b, c)))
