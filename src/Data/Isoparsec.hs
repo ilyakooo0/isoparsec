@@ -48,8 +48,7 @@ b <.> p = (p >>^ morphed) >>^ si b
 coercing :: forall b a. Coercible a b => SemiIso a b
 coercing = siPure coerce coerce
 
-morphed ::
-  (TupleMorphable a c, TupleMorphable b c) => SemiIso a b
+morphed :: (TupleMorphable a c, TupleMorphable b c) => SemiIso a b
 morphed = siPure morphTuples morphTuples
 
 mapIso :: (PolyArrow m SemiIso, Ord a, Ord b) => [(a, b)] -> m a b

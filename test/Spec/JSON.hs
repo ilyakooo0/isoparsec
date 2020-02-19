@@ -52,19 +52,14 @@ quickSpec =
 json :: (PolyArrow m SemiIso, Isoparsec m String) => m () JSON
 json = SI pure pure ^<< (string <+> array <+> integer <+> object)
   where
-    string' = token '"' &&& tokensWhile (/= '"') &&& token '"'
+    string' = token '"' **> tokensWhile (/= '"') >** token '"'
     string = _JString <.> string'
     array =
       _Array
         <.> token '['
           &&& unsafeWhiteSpace
-          &&& ( ( ( ( json &&& unsafeWhiteSpace
-                        &&& repeating
-                          ( (token ',' &&& unsafeWhiteSpace &&& json) >>^ morphed
-                          )
-                        <+^ konst []
-                    )
-                      >>^ morphed
+          &&& ( ( ( (json >** unsafeWhiteSpace)
+                      &&& repeating (token ',' *>> unsafeWhiteSpace >>> json) <+^ konst []
                   )
                     >>^ siCons
                 )
@@ -75,10 +70,11 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
     integer = _JInteger <.> number
     object =
       _Object <.> token '{' &&& unsafeWhiteSpace
-        &&& ( ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>^ morphed
-                 in (pair &&& (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+^ konst [])) >>^ siCons
-              )
+        &&& ( (pair &&& repeating (token ',' **> unsafeWhiteSpace **> pair) <+^ konst [] >>^ siCons)
                 <+^ konst []
             )
         &&& unsafeWhiteSpace
         &&& token '}'
+    pair =
+      (unsafeWhiteSpace **> string' >** unsafeWhiteSpace >** token ':' >** unsafeWhiteSpace)
+        &&& (json >** unsafeWhiteSpace)

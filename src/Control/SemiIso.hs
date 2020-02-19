@@ -9,6 +9,21 @@ module Control.SemiIso
     AlternativeMonad,
     maskr,
     maskl,
+    isoCheck,
+    siCheck,
+    check,
+    konst,
+    isoConst,
+    assoc,
+    ($$$),
+    (*>>),
+    (**>),
+    (>>*),
+    (>**),
+    (<<*),
+    (<**),
+    (*<<),
+    (**<),
   )
 where
 
@@ -90,3 +105,59 @@ maskr (SemiIso e p) = SemiIso (\a -> e a <|> pure ()) p
 
 maskl :: SemiIso () b -> SemiIso () b
 maskl (SemiIso e p) = SemiIso e (\b -> p b <|> pure ())
+
+infixl 1 *>>, **>, >>*, >**, <<*, <**, *<<, **<
+
+infixl 3 $$$
+
+($$$) :: (PolyArrow m SemiIso, Eq b) => m a b -> m c b -> m (a, c) b
+a $$$ c = a *** c >>^ check (uncurry (==)) >>^ siPure fst (\x -> (x, x))
+
+(*>>) :: (PolyArrow m SemiIso) => m a () -> m a b -> m a b
+a *>> b = a &&& b >>^ siPure snd ((),)
+
+(**>) :: (PolyArrow m SemiIso) => m () () -> m a b -> m a b
+a **> b = siPure ((),) snd ^>> a *** b >>^ siPure snd ((),)
+
+(>>*) :: (PolyArrow m SemiIso, Eq b) => m a b -> m () b -> m a b
+a >>* b = siPure (,()) fst ^>> a $$$ b
+
+(>**) :: (PolyArrow m SemiIso) => m a b -> m () () -> m a b
+a >** b = siPure (,()) fst ^>> a *** b >>^ siPure fst (,())
+
+(<<*) :: (PolyArrow m SemiIso, Eq b) => m a b -> m () b -> m a b
+a <<* b = siPure ((),) snd ^>> b $$$ a
+
+(<**) :: (PolyArrow m SemiIso) => m a b -> m () () -> m a b
+a <** b = siPure ((),) snd ^>> b *** a >>^ siPure snd ((),)
+
+(*<<) :: (PolyArrow m SemiIso) => m a () -> m a b -> m a b
+a *<< b = b &&& a >>^ siPure fst (,())
+
+(**<) :: (PolyArrow m SemiIso) => m () () -> m a b -> m a b
+a **< b = siPure (,()) fst ^>> b *** a >>^ siPure fst (,())
+
+check :: (s -> Bool) -> SemiIso s s
+check f = isoCheck f id id
+
+siCheck ::
+  (s -> Bool) ->
+  (forall f. AlternativeMonad f => s -> f a) ->
+  (forall f. AlternativeMonad f => a -> f s) ->
+  SemiIso s a
+siCheck f a b =
+  SI
+    (\c -> guard (f c) >> a c)
+    (b >=> (\c -> guard (f c) >> pure c))
+
+isoCheck :: (s -> Bool) -> (s -> a) -> (a -> s) -> SemiIso s a
+isoCheck f a b = siCheck f (pure . a) (pure . b)
+
+isoConst :: s -> a -> SemiIso s a
+isoConst s a = SI (const $ pure a) (const $ pure s)
+
+konst :: Eq x => x -> SemiIso () x
+konst x = isoConst () x >>> check (== x)
+
+assoc :: SemiIso (a, (b, c)) ((a, b), c)
+assoc = siPure (\(a, (b, c)) -> ((a, b), c)) (\((a, b), c) -> (a, (b, c)))
