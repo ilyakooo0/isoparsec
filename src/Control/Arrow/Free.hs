@@ -3,42 +3,39 @@ module Control.Arrow.Free
     runArrowFree,
     corunArrowFree,
     module Control.Arrow.Extra,
+    bifree,
   )
 where
 
 import Control.Applicative
 import Control.Arrow.Extra
 import Control.Cokleisli
--- import Control.Monad.Reader
 import Control.Monad
+import Data.Kind
 import Prelude hiding ((.))
 
--- class ArrowReader (a :: * -> * -> *) r | a -> r where
---   askr :: a () r
---   askl :: a r ()
+class FreeArrow (c :: (* -> *) -> Constraint) (a :: * -> * -> *) where
+  freer :: Eq x => (forall m. c m => m x) -> a () x
+  freel :: Eq x => (forall m. c m => m x) -> a x ()
 
--- instance (MonadReader r m, Eq r, Alternative m) => ArrowReader (Kleisli m) r where
---   askr = Kleisli $ const ask
---   askl = Kleisli $ \r -> ask >>= guard . (== r)
-
--- instance (MonadReader r m, Eq r, Alternative m) => ArrowReader (Cokleisli m) r where
---   askr = Cokleisli $ \r -> ask >>= guard . (== r)
---   askl = Cokleisli $ const ask
-
-class FreeArrow (m :: * -> *) (a :: * -> * -> *) where
-  freer :: Eq x => m x -> a () x
-  freel :: Eq x => m x -> a x ()
-
-instance (Monad m, Alternative m) => FreeArrow m (Kleisli m) where
-  freer = Kleisli . const
+instance (c m, Monad m, Alternative m) => FreeArrow c (Kleisli m) where
+  freer m = Kleisli $ const m
   freel m = Kleisli $ \x -> m >>= guard . (== x)
 
-instance (Monad m, Alternative m) => FreeArrow m (Cokleisli m) where
+instance (Monad m, Alternative m, c m) => FreeArrow c (Cokleisli m) where
   freer m = Cokleisli $ \x -> m >>= guard . (== x)
-  freel = Cokleisli . const
+  freel m = Cokleisli $ const m
 
-runArrowFree :: Kleisli m a b -> a -> m b
-runArrowFree = runKleisli
+runArrowFree :: a -> Kleisli m a b -> m b
+runArrowFree = flip runKleisli
 
-corunArrowFree :: Cokleisli m a b -> b -> m a
-corunArrowFree = runCokleisli
+corunArrowFree :: b -> Cokleisli m a b -> m a
+corunArrowFree = flip runCokleisli
+
+bifree ::
+  forall c a x.
+  (FreeArrow c a, Category a, Eq x) =>
+  (forall m. c m => m x) ->
+  a x x ->
+  a () ()
+bifree m a = freer @c m >>> a >>> freel @c m

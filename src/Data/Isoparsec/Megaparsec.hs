@@ -2,6 +2,7 @@
 
 module Data.Isoparsec.Megaparsec
   ( runMegaparsec,
+    runMegaparsecT,
   )
 where
 
@@ -20,6 +21,13 @@ runMegaparsec ::
   s ->
   Either (ParseErrorBundle s e) r
 runMegaparsec (Kleisli f) = runParser (f () <* eof) ""
+
+runMegaparsecT ::
+  (Ord e, Stream s, Monad m) =>
+  Kleisli (ParsecT e s m) () r ->
+  s ->
+  m (Either (ParseErrorBundle s e) r)
+runMegaparsecT (Kleisli f) = runParserT (f () <* eof) ""
 
 instance (MonadParsec e s m) => PolyArrow (Kleisli m) SemiIso where
   arr si = Kleisli $ \t -> case embed si t of

@@ -22,14 +22,14 @@ import Prelude hiding ((.))
 newtype SingleDigit = SingleDigit {unSingleDigit :: String}
   deriving (Eq, Show, Generic)
 
-instance ToIsoparsec SingleDigit String where
+instance ToIsoparsec SingleDigit String m where
   toIsoparsec =
     toIsoparsec @(Chunk 1 String)
       >>^ coercing
       >>^ check (all @[] isDigit)
       >>^ coercing
 
-instance (Arbitrary SingleDigit) where
+instance (Arbitrary SingleDigit) m where
   arbitrary = SingleDigit . pure <$> elements ['0' .. '9']
 
 data Digits
@@ -46,7 +46,7 @@ instance Arbitrary Digits where
         TwoDigits <$> arbitrary <*> arbitrary
       ]
 
-instance ToIsoparsec Digits String
+instance ToIsoparsec Digits String m
 
 spec :: Spec
 spec = do
