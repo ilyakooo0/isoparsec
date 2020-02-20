@@ -17,12 +17,16 @@ module Control.SemiIso
     assoc,
     ($$$),
     (*>>),
+    (&>>),
     (**>),
     (>>*),
+    (>>&),
     (>**),
     (<<*),
+    (<<&),
     (<**),
     (*<<),
+    (&<<),
     (**<),
   )
 where
@@ -31,6 +35,7 @@ import Control.Applicative as X
 import Control.Arrow.Extra
 import Control.Monad as X
 import Data.Bitraversable
+import Data.Tuple
 import Prelude hiding ((.), id)
 
 type AlternativeMonad m = (Alternative m, Monad m)
@@ -116,11 +121,17 @@ a $$$ c = a *** c >>^ check (uncurry (==)) >>^ siPure fst (\x -> (x, x))
 (*>>) :: (PolyArrow m SemiIso) => m a () -> m a b -> m a b
 a *>> b = a &&& b >>^ siPure snd ((),)
 
+(&>>) :: (PolyArrow m SemiIso) => m a () -> m b c -> m (a, b) c
+a &>> b = a *** b >>^ siPure snd ((),)
+
 (**>) :: (PolyArrow m SemiIso) => m () () -> m a b -> m a b
 a **> b = siPure ((),) snd ^>> a *** b >>^ siPure snd ((),)
 
 (>>*) :: (PolyArrow m SemiIso, Eq b) => m a b -> m () b -> m a b
 a >>* b = siPure (,()) fst ^>> a $$$ b
+
+(>>&) :: (PolyArrow m SemiIso) => m a b -> m () c -> m a (b, c)
+a >>& b = siPure (,()) fst ^>> a *** b >>> undefined
 
 (>**) :: (PolyArrow m SemiIso) => m a b -> m () () -> m a b
 a >** b = siPure (,()) fst ^>> a *** b >>^ siPure fst (,())
@@ -128,11 +139,17 @@ a >** b = siPure (,()) fst ^>> a *** b >>^ siPure fst (,())
 (<<*) :: (PolyArrow m SemiIso, Eq b) => m a b -> m () b -> m a b
 a <<* b = siPure ((),) snd ^>> b $$$ a
 
+(<<&) :: (PolyArrow m SemiIso) => m a b -> m () c -> m a (b, c)
+a <<& b = siPure ((),) snd ^>> b *** a >>^ siPure swap swap
+
 (<**) :: (PolyArrow m SemiIso) => m a b -> m () () -> m a b
 a <** b = siPure ((),) snd ^>> b *** a >>^ siPure snd ((),)
 
 (*<<) :: (PolyArrow m SemiIso) => m a () -> m a b -> m a b
 a *<< b = b &&& a >>^ siPure fst (,())
+
+(&<<) :: (PolyArrow m SemiIso) => m a () -> m b c -> m (a, b) c
+a &<< b = siPure swap swap ^>> b *** a >>^ siPure fst (,())
 
 (**<) :: (PolyArrow m SemiIso) => m () () -> m a b -> m a b
 a **< b = siPure (,()) fst ^>> b *** a >>^ siPure fst (,())

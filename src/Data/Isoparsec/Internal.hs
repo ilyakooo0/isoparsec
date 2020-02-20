@@ -29,13 +29,24 @@ class
   default token :: Eq (Element s) => Element s -> m () ()
   token x = anyToken >>^ turn (konst x)
 
+  token' :: m (Element s) (Element s)
+  default token' :: Eq (Element s) => m (Element s) (Element s)
+  token' = id >>& anyToken >>^ check (uncurry (==)) >>^ siPure fst (\x -> (x, x))
+
   tokens :: [Element s] -> m () ()
-  default tokens :: [Element s] -> m () ()
   tokens [] = arr $ isoConst () ()
   tokens (t : ts) = token t &&& tokens ts >>^ isoConst ((), ()) ()
 
+  tokens' :: m [Element s] [Element s]
+  tokens' = (turn siCons ^>> token' *** tokens' >>^ siCons) <+^ isoConst [] []
+
   chunk :: s -> m () ()
   chunk = tokens . otoList
+
+  chunk' :: m s s
+  chunk' = list ^>> tokens' >>^ turn list
+    where
+      list = siPure otoList fromList
 
   notToken :: Element s -> m () (Element s)
   default notToken :: Eq (Element s) => Element s -> m () (Element s)
