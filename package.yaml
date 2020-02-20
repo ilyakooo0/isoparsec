@@ -58,6 +58,7 @@ default-extensions:
 - TypeOperators
 - UndecidableInstances
 - RankNTypes
+- QuantifiedConstraints
 
 tests:
   isoparsec-test:

@@ -59,10 +59,10 @@ mapIso m = arr $ siMaybe (`M.lookup` n) (`M.lookup` u)
       M.fromListWith (error "mapping not unique") $
         (\(a, b) -> (b, a)) <$> m
 
-auto :: forall x s m. (ToIsoparsec x s, Isoparsec m s) => m () x
+auto :: forall x s m. (ToIsoparsec x s m, Isoparsec m s) => m () x
 auto = toIsoparsec
 
-specific :: forall x s m. (ToIsoparsec x s, Isoparsec m s, Eq x) => x -> m () ()
+specific :: forall x s m. (ToIsoparsec x s m, Isoparsec m s, Eq x) => x -> m () ()
 specific x = auto @x >>^ turn (konst x)
 
 throughIntegral ::

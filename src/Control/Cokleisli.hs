@@ -1,4 +1,4 @@
-module Data.Isoparsec.Cokleisli
+module Control.Cokleisli
   ( Cokleisli (..),
   )
 where
@@ -6,10 +6,10 @@ where
 import Control.Applicative
 import Control.Arrow.Extra
 import Control.Monad
-import Data.Isoparsec.Internal
+import Control.SemiIso
 import Prelude hiding ((.))
 
-newtype Cokleisli m a b = Cokleisli {unCokleisli :: b -> m a}
+newtype Cokleisli m a b = Cokleisli {runCokleisli :: b -> m a}
 
 instance Monad m => Category (Cokleisli m) where
   id = Cokleisli return
