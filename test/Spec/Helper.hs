@@ -2,6 +2,7 @@ module Spec.Helper
   ( shouldParseBS,
     roundtrip,
     parseSatisfyBS,
+    shouldParseS,
   )
 where
 
@@ -69,6 +70,18 @@ shouldParseBS ::
   x ->
   Expectation
 shouldParseBS = shouldParse
+
+shouldParseS ::
+  forall x.
+  ( ToIsoparsec x String,
+    Show x,
+    Eq x,
+    Isoparsec (Kleisli (Parsec Void String)) String
+  ) =>
+  String ->
+  x ->
+  Expectation
+shouldParseS = shouldParse
 
 roundtrip ::
   forall x s.

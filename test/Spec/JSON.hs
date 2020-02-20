@@ -2,6 +2,7 @@
 
 module Spec.JSON
   ( quickSpec,
+    spec,
   )
 where
 
@@ -13,6 +14,8 @@ import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
 import Data.Void
+import Spec.Helper
+import Test.Hspec
 import Test.Tasty
 import Test.Tasty.QuickCheck
 import Text.Megaparsec.Error
@@ -41,6 +44,15 @@ instance Arbitrary JSON where
 
 makePrisms ''JSON
 
+spec :: Spec
+spec =
+  it "deserializes" $ do
+    "{\"foo\": 8}" `shouldParseS` Object [("foo", JInteger 8)]
+    "{\"foo\": 8, \"\": \"\"}" `shouldParseS` Object [("foo", JInteger 8), ("", JString "")]
+    "{}" `shouldParseS` Object []
+    "[{\"foo\": 8}, 2, 3]" `shouldParseS` Array [Object [("foo", JInteger 8)], JInteger 2, JInteger 3]
+    "[{\"foo\": \"oh no\"}, 2, 3]" `shouldParseS` Array [Object [("foo", JString "oh no")], JInteger 2, JInteger 3]
+
 quickSpec :: TestTree
 quickSpec =
   testProperty "roundtrips" $ \x ->
@@ -49,22 +61,20 @@ quickSpec =
           Right y -> property $ x == y
           Left err -> counterexample (errorBundlePretty err) False
 
+instance ToIsoparsec JSON String where
+  toIsoparsec = json
+
 json :: (PolyArrow m SemiIso, Isoparsec m String) => m () JSON
 json = SI pure pure ^<< (string <+> array <+> integer <+> object)
   where
-    string' = token '"' &&& tokensWhile (/= '"') &&& token '"'
+    string' = token '"' **> tokensWhile (/= '"') >** token '"'
     string = _JString <.> string'
     array =
       _Array
         <.> token '['
           &&& unsafeWhiteSpace
-          &&& ( ( ( ( json &&& unsafeWhiteSpace
-                        &&& repeating
-                          ( (token ',' &&& unsafeWhiteSpace &&& json) >>^ morphed
-                          )
-                        <+^ konst []
-                    )
-                      >>^ morphed
+          &&& ( ( ( (json >** unsafeWhiteSpace)
+                      &&& repeating (token ',' *>> unsafeWhiteSpace >>> json) <+^ konst []
                   )
                     >>^ siCons
                 )
@@ -75,10 +85,11 @@ json = SI pure pure ^<< (string <+> array <+> integer <+> object)
     integer = _JInteger <.> number
     object =
       _Object <.> token '{' &&& unsafeWhiteSpace
-        &&& ( ( let pair = (unsafeWhiteSpace &&& string' &&& unsafeWhiteSpace &&& token ':' &&& unsafeWhiteSpace &&& json &&& unsafeWhiteSpace) >>^ morphed
-                 in (pair &&& (repeating ((token ',' &&& unsafeWhiteSpace &&& pair) >>^ morphed) <+^ konst [])) >>^ siCons
-              )
+        &&& ( (pair &&& repeating (token ',' **> unsafeWhiteSpace **> pair) <+^ konst [] >>^ siCons)
                 <+^ konst []
             )
         &&& unsafeWhiteSpace
         &&& token '}'
+    pair =
+      (unsafeWhiteSpace **> string' >** unsafeWhiteSpace >** token ':' >** unsafeWhiteSpace)
+        &&& (json >** unsafeWhiteSpace)

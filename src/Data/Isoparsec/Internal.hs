@@ -2,14 +2,9 @@ module Data.Isoparsec.Internal
   ( module X,
     IsoparsecFail (..),
     Isoparsec (..),
-    konst,
     siCons,
-    isoCheck,
-    siCheck,
-    check,
     unroll,
     arrowsWhile,
-    assoc,
     arrowsUntil,
   )
 where
@@ -100,28 +95,3 @@ siCons =
 
 class IsoparsecFail m e where
   failure :: e -> m a b
-
-siCheck ::
-  (s -> Bool) ->
-  (forall f. AlternativeMonad f => s -> f a) ->
-  (forall f. AlternativeMonad f => a -> f s) ->
-  SemiIso s a
-siCheck f a b =
-  SI
-    (\c -> guard (f c) >> a c)
-    (b >=> (\c -> guard (f c) >> pure c))
-
-isoCheck :: (s -> Bool) -> (s -> a) -> (a -> s) -> SemiIso s a
-isoCheck f a b = siCheck f (pure . a) (pure . b)
-
-isoConst :: s -> a -> SemiIso s a
-isoConst s a = SI (const $ pure a) (const $ pure s)
-
-check :: (s -> Bool) -> SemiIso s s
-check f = isoCheck f id id
-
-konst :: Eq x => x -> SemiIso () x
-konst x = isoConst () x >>> check (== x)
-
-assoc :: SemiIso (a, (b, c)) ((a, b), c)
-assoc = siPure (\(a, (b, c)) -> ((a, b), c)) (\((a, b), c) -> (a, (b, c)))
