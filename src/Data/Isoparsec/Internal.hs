@@ -18,7 +18,7 @@ import Numeric.Natural
 import Prelude as P hiding ((.), id)
 
 class
-  (PolyArrow m SemiIso, ArrowPlus m, ArrowChoice m, IsSequence s) =>
+  (PolyArrow SemiIso m, ArrowPlus m, ArrowChoice m, IsSequence s) =>
   Isoparsec m s
     | m -> s where
   {-# MINIMAL anyToken, manyTokens, tuck #-}
@@ -87,13 +87,13 @@ class
   -- >   └─────┘                          └─────┘
   tuck :: m () a -> m s a
 
-arrowsWhile :: (PolyArrow m SemiIso, ArrowPlus m) => m () a -> m () [a]
+arrowsWhile :: (PolyArrow SemiIso m, ArrowPlus m) => m () a -> m () [a]
 arrowsWhile f = ((f &&& arrowsWhile f) >>^ siCons) <+^ isoConst () []
 
-arrowsUntil :: (ArrowPlus m, Eq a, PolyArrow m SemiIso) => m () a -> m () b -> m () ([a], b)
+arrowsUntil :: (ArrowPlus m, Eq a, PolyArrow SemiIso m) => m () a -> m () b -> m () ([a], b)
 arrowsUntil a b = (arr (konst []) &&& b) <+> (a &&& arrowsUntil a b >>^ (assoc >>> first siCons))
 
-unroll :: (PolyArrow m SemiIso, ArrowPlus m, Eq a) => a -> m a (b, a) -> m () [b]
+unroll :: (PolyArrow SemiIso m, ArrowPlus m, Eq a) => a -> m a (b, a) -> m () [b]
 unroll a f = (konst a ^>> unroll' f) <+^ isoConst () []
   where
     unroll' g = (g >>> second (unroll' g)) >>^ siCons

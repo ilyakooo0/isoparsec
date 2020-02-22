@@ -26,7 +26,7 @@ instance (Alternative m, Monad m) => BaseArrow (Cokleisli m) where
   (Cokleisli cb) &&& (Cokleisli c'b) = Cokleisli $
     \(c, c') -> c'b c' >> cb c
 
-instance (Alternative m, Monad m) => PolyArrow (Cokleisli m) SemiIso where
+instance (Alternative m, Monad m) => PolyArrow SemiIso (Cokleisli m) where
   arr si = Cokleisli $ \t -> project si t
 
 instance MonadPlus m => ArrowZero (Cokleisli m) where

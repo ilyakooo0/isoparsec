@@ -29,7 +29,7 @@ instance {-# OVERLAPPABLE #-} (Category a, A.Arrow a) => BaseArrow a where
 
   (&&&) = (A.&&&)
 
-instance A.Arrow a => PolyArrow a (->) where
+instance A.Arrow a => PolyArrow (->) a where
   arr = A.arr
 
 instance {-# OVERLAPPABLE #-} A.ArrowPlus a => ArrowPlus a where

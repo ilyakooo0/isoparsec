@@ -28,6 +28,10 @@ module Control.SemiIso
     (*<<),
     (&<<),
     (**<),
+    siFst,
+    siSnd,
+    siDouble,
+    siSwap,
   )
 where
 
@@ -115,44 +119,44 @@ infixl 1 *>>, **>, >>*, >**, <<*, <**, *<<, **<
 
 infixl 3 $$$
 
-($$$) :: (PolyArrow m SemiIso, Eq b) => m a b -> m c b -> m (a, c) b
-a $$$ c = a *** c >>^ check (uncurry (==)) >>^ siPure fst (\x -> (x, x))
+($$$) :: (PolyArrow SemiIso m, Eq b) => m a b -> m c b -> m (a, c) b
+a $$$ c = a *** c >>^ turn siDouble
 
-(*>>) :: (PolyArrow m SemiIso) => m a () -> m a b -> m a b
-a *>> b = a &&& b >>^ siPure snd ((),)
+(*>>) :: (PolyArrow SemiIso m) => m a () -> m a b -> m a b
+a *>> b = a &&& b >>^ siSnd
 
-(&>>) :: (PolyArrow m SemiIso) => m a () -> m b c -> m (a, b) c
-a &>> b = a *** b >>^ siPure snd ((),)
+(&>>) :: (PolyArrow SemiIso m) => m a () -> m b c -> m (a, b) c
+a &>> b = a *** b >>^ siSnd
 
-(**>) :: (PolyArrow m SemiIso) => m () () -> m a b -> m a b
-a **> b = siPure ((),) snd ^>> a *** b >>^ siPure snd ((),)
+(**>) :: (PolyArrow SemiIso m) => m () () -> m a b -> m a b
+a **> b = turn siSnd ^>> a *** b >>^ siSnd
 
-(>>*) :: (PolyArrow m SemiIso, Eq b) => m a b -> m () b -> m a b
-a >>* b = siPure (,()) fst ^>> a $$$ b
+(>>*) :: (PolyArrow SemiIso m, Eq b) => m a b -> m () b -> m a b
+a >>* b = turn siFst ^>> a $$$ b
 
-(>>&) :: (PolyArrow m SemiIso) => m a b -> m () c -> m a (b, c)
-a >>& b = siPure (,()) fst ^>> a *** b >>> undefined
+(>>&) :: (PolyArrow SemiIso m) => m a b -> m () c -> m a (b, c)
+a >>& b = turn siFst ^>> a *** b
 
-(>**) :: (PolyArrow m SemiIso) => m a b -> m () () -> m a b
-a >** b = siPure (,()) fst ^>> a *** b >>^ siPure fst (,())
+(>**) :: (PolyArrow SemiIso m) => m a b -> m () () -> m a b
+a >** b = turn siFst ^>> a *** b >>^ siFst
 
-(<<*) :: (PolyArrow m SemiIso, Eq b) => m a b -> m () b -> m a b
-a <<* b = siPure ((),) snd ^>> b $$$ a
+(<<*) :: (PolyArrow SemiIso m, Eq b) => m a b -> m () b -> m a b
+a <<* b = turn siSnd ^>> b $$$ a
 
-(<<&) :: (PolyArrow m SemiIso) => m a b -> m () c -> m a (b, c)
-a <<& b = siPure ((),) snd ^>> b *** a >>^ siPure swap swap
+(<<&) :: (PolyArrow SemiIso m) => m a b -> m () c -> m a (b, c)
+a <<& b = turn siSnd ^>> b *** a >>^ siSwap
 
-(<**) :: (PolyArrow m SemiIso) => m a b -> m () () -> m a b
-a <** b = siPure ((),) snd ^>> b *** a >>^ siPure snd ((),)
+(<**) :: (PolyArrow SemiIso m) => m a b -> m () () -> m a b
+a <** b = turn siSnd ^>> b *** a >>^ siSnd
 
-(*<<) :: (PolyArrow m SemiIso) => m a () -> m a b -> m a b
-a *<< b = b &&& a >>^ siPure fst (,())
+(*<<) :: (PolyArrow SemiIso m) => m a () -> m a b -> m a b
+a *<< b = b &&& a >>^ siFst
 
-(&<<) :: (PolyArrow m SemiIso) => m a () -> m b c -> m (a, b) c
-a &<< b = siPure swap swap ^>> b *** a >>^ siPure fst (,())
+(&<<) :: (PolyArrow SemiIso m) => m a () -> m b c -> m (a, b) c
+a &<< b = siSwap ^>> b *** a >>^ siFst
 
-(**<) :: (PolyArrow m SemiIso) => m () () -> m a b -> m a b
-a **< b = siPure (,()) fst ^>> b *** a >>^ siPure fst (,())
+(**<) :: (PolyArrow SemiIso m) => m () () -> m a b -> m a b
+a **< b = turn siFst ^>> b *** a >>^ siFst
 
 check :: (s -> Bool) -> SemiIso s s
 check f = isoCheck f id id
@@ -178,3 +182,15 @@ konst x = isoConst () x >>> check (== x)
 
 assoc :: SemiIso (a, (b, c)) ((a, b), c)
 assoc = siPure (\(a, (b, c)) -> ((a, b), c)) (\((a, b), c) -> (a, (b, c)))
+
+siFst :: SemiIso (a, ()) a
+siFst = siPure fst (,())
+
+siSnd :: SemiIso ((), a) a
+siSnd = siPure snd ((),)
+
+siDouble :: (Eq a) => SemiIso a (a, a)
+siDouble = siPure (\x -> (x, x)) fst >>> check (uncurry (==))
+
+siSwap :: SemiIso (a, b) (b, a)
+siSwap = siPure swap swap
