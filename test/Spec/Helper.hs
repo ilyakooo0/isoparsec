@@ -33,7 +33,7 @@ parseSatisfy ::
   s ->
   (Either (ParseErrorBundle s Void) x -> Bool) ->
   Expectation
-parseSatisfy s p = runMegaparsec @Void @s toIsoparsec s `shouldSatisfy` p
+parseSatisfy s p = runMegaparsec @Void @s s toIsoparsec `shouldSatisfy` p
 
 parseSatisfyBS ::
   forall x.
@@ -57,7 +57,7 @@ shouldParse ::
   s ->
   x ->
   Expectation
-shouldParse s e = case runMegaparsec @Void @s toIsoparsec s of
+shouldParse s e = case runMegaparsec @Void @s s toIsoparsec of
   Right e' -> e' `shouldBe` e
   Left err -> expectationFailure $ errorBundlePretty err
 
@@ -100,6 +100,6 @@ roundtrip ::
   Property
 roundtrip x =
   let s = fromJust $ runPrinter @Maybe @s toIsoparsec x
-   in counterexample (show s) $ case runMegaparsec @Void @s toIsoparsec s of
+   in counterexample (show s) $ case runMegaparsec @Void @s s toIsoparsec of
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False

@@ -34,13 +34,13 @@ parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number)
 spec :: Spec
 spec =
   it "deserializes" $ do
-    runMegaparsec @() parser "12 31" `shouldBe` Right (Foo 12 31)
-    runMegaparsec @() parser "1   33" `shouldBe` Right (Foo 1 33)
-    runMegaparsec @() parser "1562" `shouldSatisfy` isLeft
+    runMegaparsec @() "12 31" parser `shouldBe` Right (Foo 12 31)
+    runMegaparsec @() "1   33" parser `shouldBe` Right (Foo 1 33)
+    runMegaparsec @() "1562" parser `shouldSatisfy` isLeft
 
 quickSpec :: TestTree
 quickSpec = testProperty "roundtrips" $ \x ->
   let s = fromJust $ runPrinter @Maybe @String parser x
-   in counterexample s $ case runMegaparsec @Void parser s of
+   in counterexample s $ case runMegaparsec @Void s parser of
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False

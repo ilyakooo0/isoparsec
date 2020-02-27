@@ -10,6 +10,7 @@ module Data.Isoparsec.Internal
 where
 
 import Control.Arrow.Extra
+import Control.Arrow.Trans.Reader
 import Control.Monad
 import Control.SemiIso as X hiding (filterM, replicateM)
 import Data.MonoTraversable as X
@@ -21,7 +22,7 @@ class
   (PolyArrow SemiIso m, ArrowPlus m, ArrowChoice m, IsSequence s) =>
   Isoparsec m s
     | m -> s where
-  {-# MINIMAL anyToken, manyTokens, tuck #-}
+  {-# MINIMAL anyToken, manyTokens, tuck' #-}
 
   anyToken :: m () (Element s)
 
@@ -86,6 +87,9 @@ class
   -- > ──┤  s  ├──────────────────────────┤  a  ├─▶
   -- >   └─────┘                          └─────┘
   tuck :: m () a -> m s a
+  tuck a = turn siSnd ^>> tuck' a
+
+  tuck' :: m a b -> m (a, s) b
 
 arrowsWhile :: (PolyArrow SemiIso m, ArrowPlus m) => m () a -> m () [a]
 arrowsWhile f = ((f &&& arrowsWhile f) >>^ siCons) <+^ isoConst () []
@@ -106,3 +110,18 @@ siCons =
 
 class IsoparsecFail m e where
   failure :: e -> m a b
+
+instance (Isoparsec a s, Eq (Element s), Eq r) => Isoparsec (ReaderArrow r a) s where
+  anyToken = raise anyToken
+  token' = raise token'
+  tokens = raise . tokens
+  tokens' = raise tokens'
+  chunk = raise . chunk
+  chunk' = raise chunk'
+  notToken = raise . notToken
+  tokenWhere = raise . tokenWhere
+  manyTokens = raise manyTokens
+  takeUntil = raise . takeUntil
+  tokensWhile = raise . tokensWhile
+  tokensWhile1 = raise . tokensWhile1
+  tuck' (ReaderArrow a) = ReaderArrow $ assoc ^>> tuck' a

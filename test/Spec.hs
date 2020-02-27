@@ -1,3 +1,4 @@
+import qualified Spec.BasicReader as BasicReader
 import qualified Spec.JSON as JSON
 import qualified Spec.Megaparsec.BasicNums as BasicNums
 import qualified Spec.Ssh as Ssh
@@ -11,6 +12,7 @@ main = do
   twoDigitsSpec <- testSpec "Two digits test" TwoDigits.spec
   sshSpec <- testSpec "ssh spec" Ssh.spec
   jsonSpec <- testSpec "json spec" JSON.spec
+  basicReaderSpec <- testSpec "json spec" BasicReader.spec
   defaultMain
     ( testGroup
         "tests"
@@ -33,6 +35,10 @@ main = do
             "ssh"
             [ sshSpec,
               Ssh.quickSpec
+            ],
+          testGroup
+            "BasicReader"
+            [ basicReaderSpec
             ]
         ]
     )

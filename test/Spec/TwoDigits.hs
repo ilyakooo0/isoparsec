@@ -29,7 +29,7 @@ instance ToIsoparsec SingleDigit String m where
       >>^ check (all @[] isDigit)
       >>^ coercing
 
-instance (Arbitrary SingleDigit) m where
+instance Arbitrary SingleDigit where
   arbitrary = SingleDigit . pure <$> elements ['0' .. '9']
 
 data Digits
@@ -52,18 +52,18 @@ spec :: Spec
 spec = do
   let parser = toIsoparsec @_ @String
   it "deserializes" $ do
-    runMegaparsec @() parser "12" `shouldBe` Right (TwoDigits (SingleDigit "1") (SingleDigit "2"))
-    runMegaparsec @() parser "125" `shouldBe` Right (ThreeDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5"))
-    runMegaparsec @() parser "1253" `shouldBe` Right (FourDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5") (SingleDigit "3"))
-    runMegaparsec @() parser "12538" `shouldSatisfy` isLeft
-    runMegaparsec @() parser "2" `shouldSatisfy` isLeft
-    runMegaparsec @() parser "a" `shouldSatisfy` isLeft
-    runMegaparsec @() parser "1a" `shouldSatisfy` isLeft
+    runMegaparsec @() "12" parser `shouldBe` Right (TwoDigits (SingleDigit "1") (SingleDigit "2"))
+    runMegaparsec @() "125" parser `shouldBe` Right (ThreeDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5"))
+    runMegaparsec @() "1253" parser `shouldBe` Right (FourDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5") (SingleDigit "3"))
+    runMegaparsec @() "12538" parser `shouldSatisfy` isLeft
+    runMegaparsec @() "2" parser `shouldSatisfy` isLeft
+    runMegaparsec @() "a" parser `shouldSatisfy` isLeft
+    runMegaparsec @() "1a" parser `shouldSatisfy` isLeft
 
 quickSpec :: TestTree
 quickSpec = testProperty "roundtrips" $ \x ->
   let s = fromJust $ runPrinter @Maybe @String parser x
-   in counterexample s $ case runMegaparsec @Void parser s of
+   in counterexample s $ case runMegaparsec @Void s parser of
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False
   where

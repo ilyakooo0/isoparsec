@@ -31,7 +31,7 @@ data MessageNumber
   | NewKeysMsg
   deriving (Eq, Show, Ord)
 
-instance ToIsoparsec MessageNumber ByteString where
+instance ToIsoparsec MessageNumber ByteString a where
   toIsoparsec =
     anyToken
       >>> mapIso
@@ -49,18 +49,18 @@ newtype DisconnectReasonCode
   = DisconnectReasonCode {unDisconnectReasonCode :: Byte32 'BE}
   deriving (Eq, Ord, Show, Generic, Arbitrary)
 
-instance ToIsoparsec DisconnectReasonCode ByteString
+instance ToIsoparsec DisconnectReasonCode ByteString a
 
 newtype AlwaysDisplay = AlwaysDisplay {unAlwaysDisplay :: Bool}
   deriving (Eq, Ord, Show, Generic, Arbitrary)
 
-instance ToIsoparsec AlwaysDisplay ByteString
+instance ToIsoparsec AlwaysDisplay ByteString a
 
 newtype PacketSequenceNumber
   = PacketSequenceNumber {unPacketSequenceNumber :: Byte32 'BE}
   deriving (Eq, Ord, Show, Generic, Arbitrary)
 
-instance ToIsoparsec PacketSequenceNumber ByteString
+instance ToIsoparsec PacketSequenceNumber ByteString a
 
 data Payload
   = VersionPayload String
@@ -88,7 +88,7 @@ instance Arbitrary Payload where
 
 makePrisms ''Payload
 
-instance ToIsoparsec Payload ByteString where
+instance ToIsoparsec Payload ByteString a where
   toIsoparsec =
     ( _DisconnectPayload
         <.> specific DisconnectMsg
@@ -136,7 +136,7 @@ newtype MAC = MAC {unMAC :: ByteString}
 data NoneMAC = NoneMAC
   deriving (Eq, Ord, Show, Generic)
 
-instance ToIsoparsec NoneMAC b where
+instance ToIsoparsec NoneMAC b a where
   toIsoparsec = arr $ konst NoneMAC
 
 instance Arbitrary NoneMAC where
@@ -151,7 +151,7 @@ instance Arbitrary mac => Arbitrary (Packet mac) where
 
 makePrisms ''Packet
 
-instance ToIsoparsec mac ByteString => ToIsoparsec (Packet mac) ByteString where
+instance ToIsoparsec mac ByteString a => ToIsoparsec (Packet mac) ByteString a where
   toIsoparsec =
     ( auto @(Byte32 'BE) &&& auto @Byte8
         >>> throughIntegral *** throughIntegral

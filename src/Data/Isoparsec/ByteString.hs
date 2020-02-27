@@ -20,7 +20,7 @@ import Data.Proxy
 import Data.Word
 import Prelude as P hiding ((.))
 
-utf8 :: PolyArrow m SemiIso => m ByteString String
+utf8 :: PolyArrow SemiIso m => m ByteString String
 utf8 = arr $ siPure C.unpack C.pack
 
 data Endianness = BE | LE

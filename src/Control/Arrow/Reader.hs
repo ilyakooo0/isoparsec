@@ -1,20 +1,25 @@
 module Control.Arrow.Reader
-  ( runReaderArrow,
-    ArrowReader (..),
+  ( ArrowReader (..),
     asksr,
     asksl,
+    biask,
+    biasks,
+    module Control.Arrow.Trans.Reader,
   )
 where
 
 import Control.Arrow.Extra
+import Control.Arrow.Trans.Reader
 import Control.SemiIso
 import Prelude hiding ((.), id)
-
-newtype ReaderArrow r s a b = ReaderArrow {unReaderArrow :: s (r, a) (r, b)}
 
 class ArrowReader r a where
   askr :: a () r
   askl :: a r ()
+
+instance (PolyArrow SemiIso a, Eq r) => ArrowReader r (ReaderArrow r a) where
+  askr = ReaderArrow . arr $ siFst >>> siDouble
+  askl = ReaderArrow . arr $ turn siDouble >>> turn siFst
 
 asksr :: (PolyArrow SemiIso a, ArrowReader r a) => SemiIso r s -> a () s
 asksr si = askr >>^ si
@@ -22,10 +27,8 @@ asksr si = askr >>^ si
 asksl :: (PolyArrow SemiIso a, ArrowReader r a) => SemiIso r s -> a s ()
 asksl si = turn si ^>> askl
 
-instance (PolyArrow SemiIso a, Eq r) => ArrowReader r (ReaderArrow r a) where
-  askr = ReaderArrow . arr $ siFst >>> siDouble
-  askl = ReaderArrow . arr $ turn siDouble >>> turn siFst
+biask :: (ArrowReader r a, Category a) => a r r -> a () ()
+biask a = askr >>> a >>> askl
 
-runReaderArrow :: (PolyArrow SemiIso s, Eq r) => r -> ReaderArrow r s a b -> s a b
-runReaderArrow r a =
-  turn siSnd >>> first (konst r) ^>> unReaderArrow a >>^ (first . turn $ konst r) >>^ siSnd
+biasks :: (ArrowReader r a, PolyArrow SemiIso a) => SemiIso r s -> a s s -> a () ()
+biasks si a = asksr si >>> a >>> asksl si

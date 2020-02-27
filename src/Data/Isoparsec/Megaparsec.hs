@@ -17,19 +17,19 @@ import Prelude hiding ((.))
 
 runMegaparsec ::
   (Ord e, Stream s) =>
-  Kleisli (Parsec e s) () r ->
   s ->
+  Kleisli (Parsec e s) () r ->
   Either (ParseErrorBundle s e) r
-runMegaparsec (Kleisli f) = runParser (f () <* eof) ""
+runMegaparsec s (Kleisli f) = runParser (f () <* eof) "" s
 
 runMegaparsecT ::
   (Ord e, Stream s, Monad m) =>
-  Kleisli (ParsecT e s m) () r ->
   s ->
+  Kleisli (ParsecT e s m) () r ->
   m (Either (ParseErrorBundle s e) r)
-runMegaparsecT (Kleisli f) = runParserT (f () <* eof) ""
+runMegaparsecT s (Kleisli f) = runParserT (f () <* eof) "" s
 
-instance (MonadParsec e s m) => PolyArrow (Kleisli m) SemiIso where
+instance (MonadParsec e s m) => PolyArrow SemiIso (Kleisli m) where
   arr si = Kleisli $ \t -> case embed si t of
     Just x -> return x
     Nothing -> M.failure Nothing mempty
@@ -44,10 +44,10 @@ instance
 
   manyTokens = Kleisli $ takeP Nothing . fromIntegral
 
-  tuck (Kleisli f) = Kleisli $ \sub -> do
+  tuck' (Kleisli f) = Kleisli $ \(x, sub) -> do
     sup <- getInput
     setInput sub
-    r <- f () <* eof
+    r <- f x <* eof
     setInput sup
     return r
 

@@ -32,12 +32,15 @@ module Control.SemiIso
     siSnd,
     siDouble,
     siSwap,
+    siTranspose2,
+    siSequenceEither,
   )
 where
 
 import Control.Applicative as X
 import Control.Arrow.Extra
 import Control.Monad as X
+import qualified Data.Bifunctor as Bi
 import Data.Bitraversable
 import Data.Tuple
 import Prelude hiding ((.), id)
@@ -194,3 +197,10 @@ siDouble = siPure (\x -> (x, x)) fst >>> check (uncurry (==))
 
 siSwap :: SemiIso (a, b) (b, a)
 siSwap = siPure swap swap
+
+siTranspose2 :: SemiIso ((a, b), (c, d)) ((a, c), (b, d))
+siTranspose2 =
+  siPure (\((r1, b), (r2, c)) -> ((r1, r2), (b, c))) (\((r1, r2), (b, c)) -> ((r1, b), (r2, c)))
+
+siSequenceEither :: SemiIso (r, Either a b) (Either (r, a) (r, b))
+siSequenceEither = siPure (\(r, e) -> Bi.bimap (r,) (r,) e) (either (Bi.second Left) (Bi.second Right))

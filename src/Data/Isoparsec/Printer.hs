@@ -36,4 +36,4 @@ instance
     tell $ Dual w
     return . fromIntegral . olength $ w
 
-  tuck (Cokleisli f) = Cokleisli $ lift . fmap getDual . execWriterT . f
+  tuck' (Cokleisli f) = Cokleisli $ lift . (fmap . fmap) getDual . runWriterT . f
