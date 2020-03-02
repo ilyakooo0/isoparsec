@@ -20,7 +20,7 @@ import Data.Proxy
 import Data.Word
 import Prelude as P hiding ((.))
 
-utf8 :: PolyArrow m SemiIso => m ByteString String
+utf8 :: PolyArrow SemiIso m => m ByteString String
 utf8 = arr $ siPure C.unpack C.pack
 
 data Endianness = BE | LE
@@ -67,22 +67,22 @@ newtype Byte32 (e :: Endianness) = Byte32 {unByte32 :: Word32}
 newtype Byte64 (e :: Endianness) = Byte64 {unByte64 :: Word64}
   deriving (Show, Eq, Ord, Enum, Num, Real, Integral, Bounded)
 
-instance BytesToIsoparsec Word16 e => ToIsoparsec (Byte16 e) ByteString where
+instance BytesToIsoparsec Word16 e => ToIsoparsec (Byte16 e) ByteString m where
   toIsoparsec = bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte16 e) @Word16
 
-instance BytesToIsoparsec Word32 e => ToIsoparsec (Byte32 e) ByteString where
+instance BytesToIsoparsec Word32 e => ToIsoparsec (Byte32 e) ByteString m where
   toIsoparsec = bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte32 e) @Word32
 
-instance BytesToIsoparsec Word64 e => ToIsoparsec (Byte64 e) ByteString where
+instance BytesToIsoparsec Word64 e => ToIsoparsec (Byte64 e) ByteString m where
   toIsoparsec = bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte64 e) @Word64
 
-instance ToIsoparsec Bool ByteString where
+instance ToIsoparsec Bool ByteString m where
   toIsoparsec = anyToken >>> mapIso [(0, False), (1, True)]
 
 newtype SSHString = SSHString {unSSHString :: String}
   deriving (Show, Eq, Ord)
 
-instance ToIsoparsec SSHString ByteString where
+instance ToIsoparsec SSHString ByteString m where
   toIsoparsec =
     auto @(Byte32 'BE)
       >>^ coercing @Word32

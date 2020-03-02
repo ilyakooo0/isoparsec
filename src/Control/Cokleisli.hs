@@ -1,4 +1,4 @@
-module Data.Isoparsec.Cokleisli
+module Control.Cokleisli
   ( Cokleisli (..),
   )
 where
@@ -6,10 +6,10 @@ where
 import Control.Applicative
 import Control.Arrow.Extra
 import Control.Monad
-import Data.Isoparsec.Internal
+import Control.SemiIso
 import Prelude hiding ((.))
 
-newtype Cokleisli m a b = Cokleisli {unCokleisli :: b -> m a}
+newtype Cokleisli m a b = Cokleisli {runCokleisli :: b -> m a}
 
 instance Monad m => Category (Cokleisli m) where
   id = Cokleisli return
@@ -26,7 +26,7 @@ instance (Alternative m, Monad m) => BaseArrow (Cokleisli m) where
   (Cokleisli cb) &&& (Cokleisli c'b) = Cokleisli $
     \(c, c') -> c'b c' >> cb c
 
-instance (Alternative m, Monad m) => PolyArrow (Cokleisli m) SemiIso where
+instance (Alternative m, Monad m) => PolyArrow SemiIso (Cokleisli m) where
   arr si = Cokleisli $ \t -> project si t
 
 instance MonadPlus m => ArrowZero (Cokleisli m) where

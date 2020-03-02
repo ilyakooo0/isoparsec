@@ -57,14 +57,14 @@ quickSpec :: TestTree
 quickSpec =
   testProperty "roundtrips" $ \x ->
     let s = fromJust $ runPrinter @Maybe @String json x
-     in counterexample s $ case runMegaparsec @Void json s of
+     in counterexample s $ case runMegaparsec @Void s json of
           Right y -> property $ x == y
           Left err -> counterexample (errorBundlePretty err) False
 
-instance ToIsoparsec JSON String where
+instance ToIsoparsec JSON String a where
   toIsoparsec = json
 
-json :: (PolyArrow m SemiIso, Isoparsec m String) => m () JSON
+json :: Isoparsec m String => m () JSON
 json = SI pure pure ^<< (string <+> array <+> integer <+> object)
   where
     string' = token '"' **> tokensWhile (/= '"') >** token '"'

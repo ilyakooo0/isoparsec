@@ -22,11 +22,11 @@ infixl 5 ^+>
 
 infixl 5 ^+^
 
-(<+^) :: (ArrowPlus a, PolyArrow a p) => a b c -> p b c -> a b c
+(<+^) :: (ArrowPlus a, PolyArrow p a) => a b c -> p b c -> a b c
 a <+^ b = a <+> arr b
 
-(^+>) :: (ArrowPlus a, PolyArrow a p) => p b c -> a b c -> a b c
+(^+>) :: (ArrowPlus a, PolyArrow p a) => p b c -> a b c -> a b c
 a ^+> b = arr a <+> b
 
-(^+^) :: (ArrowPlus a, PolyArrow a p) => p b c -> p b c -> a b c
+(^+^) :: (ArrowPlus a, PolyArrow p a) => p b c -> p b c -> a b c
 a ^+^ b = arr a <+> arr b

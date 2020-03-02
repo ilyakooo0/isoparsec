@@ -6,6 +6,8 @@ module Spec.Helper
   )
 where
 
+import Control.Cokleisli
+import Control.Monad.Writer.Lazy
 import Data.ByteString as BS
 import Data.Either
 import Data.Isoparsec as I
@@ -21,7 +23,7 @@ import Prelude as P hiding ((.))
 
 parseSatisfy ::
   forall x s.
-  ( ToIsoparsec x s,
+  ( ToIsoparsec x s (Kleisli (Parsec Void s)),
     Stream s,
     Show x,
     Show (M.Token s),
@@ -31,11 +33,11 @@ parseSatisfy ::
   s ->
   (Either (ParseErrorBundle s Void) x -> Bool) ->
   Expectation
-parseSatisfy s p = runMegaparsec @Void @s toIsoparsec s `shouldSatisfy` p
+parseSatisfy s p = runMegaparsec @Void @s s toIsoparsec `shouldSatisfy` p
 
 parseSatisfyBS ::
   forall x.
-  ( ToIsoparsec x ByteString,
+  ( ToIsoparsec x ByteString (Kleisli (Parsec Void ByteString)),
     Show x,
     Isoparsec (Kleisli (Parsec Void ByteString)) ByteString
   ) =>
@@ -46,7 +48,7 @@ parseSatisfyBS = parseSatisfy
 
 shouldParse ::
   forall x s.
-  ( ToIsoparsec x s,
+  ( ToIsoparsec x s (Kleisli (Parsec Void s)),
     Stream s,
     Show x,
     Eq x,
@@ -55,13 +57,13 @@ shouldParse ::
   s ->
   x ->
   Expectation
-shouldParse s e = case runMegaparsec @Void @s toIsoparsec s of
+shouldParse s e = case runMegaparsec @Void @s s toIsoparsec of
   Right e' -> e' `shouldBe` e
   Left err -> expectationFailure $ errorBundlePretty err
 
 shouldParseBS ::
   forall x.
-  ( ToIsoparsec x ByteString,
+  ( ToIsoparsec x ByteString (Kleisli (Parsec Void ByteString)),
     Show x,
     Eq x,
     Isoparsec (Kleisli (Parsec Void ByteString)) ByteString
@@ -73,7 +75,7 @@ shouldParseBS = shouldParse
 
 shouldParseS ::
   forall x.
-  ( ToIsoparsec x String,
+  ( ToIsoparsec x String (Kleisli (Parsec Void String)),
     Show x,
     Eq x,
     Isoparsec (Kleisli (Parsec Void String)) String
@@ -85,7 +87,8 @@ shouldParseS = shouldParse
 
 roundtrip ::
   forall x s.
-  ( ToIsoparsec x s,
+  ( ToIsoparsec x s (Kleisli (Parsec Void s)),
+    ToIsoparsec x s (Cokleisli (WriterT (Dual s) Maybe)),
     Stream s,
     Show s,
     I.Element s ~ M.Token s,
@@ -97,6 +100,6 @@ roundtrip ::
   Property
 roundtrip x =
   let s = fromJust $ runPrinter @Maybe @s toIsoparsec x
-   in counterexample (show s) $ case runMegaparsec @Void @s toIsoparsec s of
+   in counterexample (show s) $ case runMegaparsec @Void @s s toIsoparsec of
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False

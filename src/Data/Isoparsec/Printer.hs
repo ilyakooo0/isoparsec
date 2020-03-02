@@ -5,9 +5,9 @@ module Data.Isoparsec.Printer
   )
 where
 
+import Control.Cokleisli
 import Control.Monad.Writer.Lazy
 import Data.Isoparsec
-import Data.Isoparsec.Cokleisli
 import Prelude hiding ((.), id)
 
 runPrinter ::
@@ -16,7 +16,7 @@ runPrinter ::
   Cokleisli (WriterT (Dual s) m) () a ->
   a ->
   m s
-runPrinter p = fmap getDual . execWriterT . unCokleisli p
+runPrinter p = fmap getDual . execWriterT . runCokleisli p
 
 instance IsoparsecFail (Cokleisli (WriterT s Maybe)) e where
   failure _ = Cokleisli . const $ WriterT Nothing
@@ -36,4 +36,4 @@ instance
     tell $ Dual w
     return . fromIntegral . olength $ w
 
-  tuck (Cokleisli f) = Cokleisli $ lift . fmap getDual . execWriterT . f
+  tuck' (Cokleisli f) = Cokleisli $ lift . (fmap . fmap) getDual . runWriterT . f
