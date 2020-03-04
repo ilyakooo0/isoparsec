@@ -28,6 +28,9 @@ dependencies:
 - mtl
 - profunctors
 - mono-traversable
+- brick
+- vty
+- word-wrap
 
 library:
   source-dirs: src
@@ -58,6 +61,7 @@ default-extensions:
 - TypeOperators
 - UndecidableInstances
 - RankNTypes
+- DeriveFunctor
 
 tests:
   isoparsec-test:
@@ -78,3 +82,14 @@ tests:
     - QuickCheck
     - megaparsec
     - bytestring
+
+executable:
+  source-dirs: debugger
+  main: Main.hs
+  dependencies:
+  - isoparsec
+  - lens
+  ghc-options:
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
