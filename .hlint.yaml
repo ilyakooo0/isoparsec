@@ -138,8 +138,27 @@
 - warn: {lhs: "(a &&& (repeating a <+^ konst [])) >>^ siCons", rhs: "repeating a"}
 - fixity: "infixl 0 <.>"
 - warn: {lhs: "(b >>^ morphed) >>^ si a", rhs: "a <.> b"}
+- warn: {lhs: "withPrism a\n  (\\ x y -> SemiIso (pure . x) (either (const empty) pure . y))", rhs: "siPrism a"}
+- infix: "infixl 7 ~>"
+- infix: "infixl 7 ~>^"
+- infix: "infixl 7 ^~>"
+- warn: {lhs: "turn siHFst ^>> (makeHListable a *** makeHListable b) >>^ siHFst", rhs: "(~>) a b"}
+- warn: {lhs: "makeHListable a >>> makeHListable b", rhs: "(~>) a b"}
+- warn: {lhs: "makeHListable a >>> makeHListable b", rhs: "(~>) a b"}
+- warn: {lhs: "siPure fst (, HNil)", rhs: "siHFst"}
+- warn: {lhs: "siPure snd (HNil,)", rhs: "siHSnd"}
+- warn: {lhs: "makeHListable a >>> makeHListable (arr b)", rhs: "(~>^) a b"}
+- warn: {lhs: "makeHListable (arr a) >>> makeHListable b", rhs: "(^~>) a b"}
+- infix: "infixl 5 <~>"
+- warn: {lhs: "makeHListable a <+> makeHListable b", rhs: "(<~>) a b"}
+- infix: "infixl 3 &~&"
+- warn: {lhs: "(makeHListable a &&& makeHListable b) >>^ consHList", rhs: "(&~&) a b"}
 - warn: {lhs: "siPure coerce coerce", rhs: "coercing"}
 - warn: {lhs: "siPure morphTuples morphTuples", rhs: "morphed"}
+- warn: {lhs: "siPure flatUnmorph flatMorph", rhs: "fMorphed"}
+- warn: {lhs: "turn fMorphed ^>> a >>^ fMorphed", rhs: "makeHListable a"}
+- warn: {lhs: "fMorphed ^>> a >>^ turn fMorphed", rhs: "destructHList a"}
+- warn: {lhs: "siPure (uncurry (++:))\n  (\\ c -> (hTake @(Length a) Proxy c, hDrop @(Length a) Proxy c))", rhs: "consHList"}
 - warn: {lhs: "auto @x >>^ turn (konst a)", rhs: "specific a"}
 - warn: {lhs: "arr (siPure fromIntegral fromIntegral)", rhs: "throughIntegral"}
 

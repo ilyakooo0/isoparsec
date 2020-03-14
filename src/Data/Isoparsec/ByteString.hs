@@ -20,8 +20,8 @@ import Data.Proxy
 import Data.Word
 import Prelude as P hiding ((.))
 
-utf8 :: PolyArrow SemiIso m => m ByteString String
-utf8 = arr $ siPure C.unpack C.pack
+utf8 :: SemiIso ByteString String
+utf8 = siPure C.unpack C.pack
 
 data Endianness = BE | LE
 
@@ -88,5 +88,5 @@ instance ToIsoparsec SSHString ByteString m where
       >>^ coercing @Word32
       >>^ siPure fromIntegral fromIntegral
       >>> manyTokens
-      >>> utf8
+      >>^ utf8
       >>^ siPure SSHString unSSHString
