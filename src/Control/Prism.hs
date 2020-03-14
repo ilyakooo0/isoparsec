@@ -1,6 +1,5 @@
 module Control.Prism
   ( withPrism,
-    Market,
     Identity,
     Prism',
   )
