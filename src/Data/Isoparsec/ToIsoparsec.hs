@@ -42,6 +42,3 @@ instance (GToIsoparsec a s m, GToIsoparsec b s m) => GToIsoparsec (a :+: b) s m 
       fromL _ = empty
       fromR (R1 b) = pure b
       fromR _ = empty
-
-instance {-# OVERLAPPABLE #-} t ~ Element s => ToIsoparsec t s m where
-  toIsoparsec = anyToken

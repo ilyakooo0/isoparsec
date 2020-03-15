@@ -27,7 +27,7 @@ instance ArrowReader String a => ToIsoparsec ConstSep String a where
 spec :: Spec
 spec = do
   let run (sep :: String) (s :: String) =
-        runMegaparsec @() s . runReaderArrow sep $ (auto @ConstSep)
+        runMegaparsecParser s . runReaderArrow sep $ (auto @ConstSep)
   it "deserializes" $ do
     run "s" "12s31" `shouldBe` Right (ConstSep 12 31)
     run " " "12 31" `shouldBe` Right (ConstSep 12 31)
