@@ -86,103 +86,236 @@
   - -XUndecidableInstances
   - -XRankNTypes
 
+# hints found in src/Control/Cokleisli.hs
+- warn: {lhs: "Cokleisli return", rhs: "id"}
+- warn: {lhs: "Cokleisli (\\ t -> project a t)", rhs: "arr a"}
+- warn: {lhs: "Cokleisli (const mzero)", rhs: "zeroArrow"}
+
+# hints found in src/Control/Prism.hs
+- warn: {lhs: "case coerce (a (Market Identity Right)) of\n    Market bt seta -> b bt seta", rhs: "withPrism a b"}
+
 # hints found in src/Control/SemiIso.hs
 - warn: {lhs: "SI (pure . a) (pure . b)", rhs: "siPure a b"}
-- warn: {lhs: "SemiIso (pure . a) (pure . b)", rhs: "siPure a b"}
+- warn: {lhs: "SemiIso pure pure", rhs: "id"}
 - warn: {lhs: "SemiIso (const empty) (const empty)", rhs: "zeroArrow"}
+- infix: "infixl 1 *>>"
+- infix: "infixl 1 **>"
+- infix: "infixl 1 >>*"
+- infix: "infixl 1 >**"
+- infix: "infixl 1 <<*"
+- infix: "infixl 1 <**"
+- infix: "infixl 1 *<<"
+- infix: "infixl 1 **<"
+- infix: "infixl 3 $$$"
+- warn: {lhs: "a *** b >>^ turn siDouble", rhs: "($$$) a b"}
+- warn: {lhs: "a &&& b >>^ siSnd", rhs: "(*>>) a b"}
+- warn: {lhs: "a *** b >>^ siSnd", rhs: "(&>>) a b"}
+- warn: {lhs: "turn siSnd ^>> a *** b >>^ siSnd", rhs: "(**>) a b"}
+- warn: {lhs: "turn siFst ^>> a $$$ b", rhs: "(>>*) a b"}
+- warn: {lhs: "turn siFst ^>> a *** b", rhs: "(>>&) a b"}
+- warn: {lhs: "turn siFst ^>> a *** b >>^ siFst", rhs: "(>**) a b"}
+- warn: {lhs: "turn siSnd ^>> b $$$ a", rhs: "(<<*) a b"}
+- warn: {lhs: "turn siSnd ^>> b *** a >>^ siSwap", rhs: "(<<&) a b"}
+- warn: {lhs: "turn siSnd ^>> b *** a >>^ siSnd", rhs: "(<**) a b"}
+- warn: {lhs: "b &&& a >>^ siFst", rhs: "(*<<) a b"}
+- warn: {lhs: "siSwap ^>> b *** a >>^ siFst", rhs: "(&<<) a b"}
+- warn: {lhs: "turn siFst ^>> b *** a >>^ siFst", rhs: "(**<) a b"}
+- warn: {lhs: "isoCheck a id id", rhs: "check a"}
+- warn: {lhs: "SI (\\ c -> guard (a c) >> b c)\n  (c >=> (\\ c -> guard (a c) >> pure c))", rhs: "siCheck a b c"}
+- warn: {lhs: "siCheck a (pure . b) (pure . c)", rhs: "isoCheck a b c"}
+- warn: {lhs: "SI (const (pure b)) (const (pure a))", rhs: "isoConst a b"}
+- warn: {lhs: "isoConst () a >>> check (== a)", rhs: "konst a"}
+- warn: {lhs: "siPure (\\ (a, (b, c)) -> ((a, b), c))\n  (\\ ((a, b), c) -> (a, (b, c)))", rhs: "assoc"}
+- warn: {lhs: "siPure fst (, ())", rhs: "siFst"}
+- warn: {lhs: "siPure snd ((),)", rhs: "siSnd"}
+- warn: {lhs: "siPure (\\ x -> (x, x)) fst >>> check (uncurry (==))", rhs: "siDouble"}
+- warn: {lhs: "siPure swap swap", rhs: "siSwap"}
+- warn: {lhs: "siPure (\\ ((r1, b), (r2, c)) -> ((r1, r2), (b, c)))\n  (\\ ((r1, r2), (b, c)) -> ((r1, b), (r2, c)))", rhs: "siTranspose2"}
+- warn: {lhs: "siPure (\\ (r, e) -> Bi.bimap (r,) (r,) e)\n  (either (Bi.second Left) (Bi.second Right))", rhs: "siSequenceEither"}
 
 # hints found in src/Control/Arrow/Extra.hs
-- fixity: "infixl 5 <+^"
-- fixity: "infixl 5 ^+>"
-- fixity: "infixl 5 ^+^"
-- warn: {lhs: "a <+> arr b", rhs: "a <+^ b"}
-- warn: {lhs: "arr a <+> b", rhs: "a ^+> b"}
-- warn: {lhs: "arr a <+> arr b", rhs: "a ^+^ b"}
+- infix: "infixl 5 <+^"
+- infix: "infixl 5 ^+>"
+- infix: "infixl 5 ^+^"
+- warn: {lhs: "a <+> arr b", rhs: "(<+^) a b"}
+- warn: {lhs: "arr a <+> b", rhs: "(^+>) a b"}
+- warn: {lhs: "arr a <+> arr b", rhs: "(^+^) a b"}
+
+# hints found in src/Control/Arrow/Reader.hs
+- warn: {lhs: "(ReaderArrow . arr) (siFst >>> siDouble)", rhs: "askr"}
+- warn: {lhs: "(ReaderArrow . arr) (turn siDouble >>> turn siFst)", rhs: "askl"}
+- warn: {lhs: "askr >>^ a", rhs: "asksr a"}
+- warn: {lhs: "turn a ^>> askl", rhs: "asksl a"}
+- warn: {lhs: "askr >>> a >>> askl", rhs: "biask a"}
+- warn: {lhs: "asksr a >>> b >>> asksl a", rhs: "biasks a b"}
 
 # hints found in src/Control/Arrow/Extra/ArrowChoice.hs
-- fixity: "infixl 2 +++"
-- fixity: "infixl 2 |||"
+- infix: "infixl 2 +++"
+- infix: "infixl 2 |||"
 
 # hints found in src/Control/Arrow/Extra/ArrowPlus.hs
-- fixity: "infixl 5 <+>"
+- infix: "infixl 5 <+>"
 
 # hints found in src/Control/Arrow/Extra/ArrowZero.hs
 # no hints found
 
 # hints found in src/Control/Arrow/Extra/BaseArrow.hs
-- fixity: "infixl 3 ***"
-- fixity: "infixl 3 &&&"
-- fixity: "infixl 1 >>>"
-- fixity: "infixl 1 <<<"
+- infix: "infixl 3 ***"
+- infix: "infixl 3 &&&"
+- infix: "infixl 1 >>>"
+- warn: {lhs: "b (a c)", rhs: "(>>>) a b c"}
+- infix: "infixl 1 <<<"
+- warn: {lhs: "a (b c)", rhs: "(<<<) a b c"}
 
 # hints found in src/Control/Arrow/Extra/Orphans.hs
 # no hints found
 
 # hints found in src/Control/Arrow/Extra/PolyArrow.hs
-- fixity: "infixl 1 ^>>"
-- fixity: "infixl 1 >>^"
-- fixity: "infixl 1 ^<<"
-- fixity: "infixl 1 <<^"
-- fixity: "infixl 1 ^>^"
-- fixity: "infixl 1 ^<^"
-- warn: {lhs: "arr a >>> arr b", rhs: "a ^>^ b"}
-- warn: {lhs: "arr a <<< arr b", rhs: "a ^<^ b"}
-- warn: {lhs: "arr a >>> b", rhs: "a ^>> b"}
-- warn: {lhs: "a >>> arr b", rhs: "a >>^ b"}
-- warn: {lhs: "a <<< arr b", rhs: "a <<^ b"}
-- warn: {lhs: "arr a <<< b", rhs: "a ^<< b"}
+- infix: "infixl 1 ^>>"
+- infix: "infixl 1 >>^"
+- infix: "infixl 1 ^<<"
+- infix: "infixl 1 <<^"
+- infix: "infixl 1 ^>^"
+- infix: "infixl 1 ^<^"
+- warn: {lhs: "arr a >>> b", rhs: "(^>>) a b"}
+- warn: {lhs: "a >>> arr b", rhs: "(>>^) a b"}
+- warn: {lhs: "a <<< arr b", rhs: "(<<^) a b"}
+- warn: {lhs: "arr a <<< b", rhs: "(^<<) a b"}
+- warn: {lhs: "arr a >>> arr b", rhs: "(^>^) a b"}
+- warn: {lhs: "arr a <<< arr b", rhs: "(^<^) a b"}
+
+# hints found in src/Control/Arrow/Trans/Class.hs
+# no hints found
+
+# hints found in src/Control/Arrow/Trans/Reader.hs
+- warn: {lhs: "(ReaderArrow . second) id", rhs: "id"}
+- warn: {lhs: "ReaderArrow ((second . arr) a)", rhs: "arr a"}
+- warn: {lhs: "ReaderArrow (id *** zeroArrow)", rhs: "zeroArrow"}
+- warn: {lhs: "turn siSnd >>>\n  first (konst a) ^>>\n    unReaderArrow b >>^ ((first . turn) (konst a)) >>^ siSnd", rhs: "runReaderArrow a b"}
+- warn: {lhs: "ReaderArrow (second a)", rhs: "raise a"}
+
+# hints found in src/Control/Tuple/Morph.hs
+- warn: {lhs: "morph (unmorph a)", rhs: "morphTuples a"}
+- warn: {lhs: "morph ((hReorder Proxy . unmorph) a)", rhs: "morphPickTuples a"}
+- warn: {lhs: "morph ((hReorder Proxy . unmorph) a)", rhs: "morphReorderTuples a"}
+- infix: "infixl 5 :+"
+- infix: "infixl 4 ++:"
+- warn: {lhs: "error \"oh no\"", rhs: "hFind"}
+- warn: {lhs: "unmorph' (Proxy @flag)", rhs: "unmorph"}
+- warn: {lhs: "morph' (Proxy @flag)", rhs: "morph"}
+- warn: {lhs: "genericUnmorph (unM1 a)", rhs: "genericUnmorph a"}
+- warn: {lhs: "M1 (genericMorph a)", rhs: "genericMorph a"}
+- warn: {lhs: "unmorph (unK1 a)", rhs: "genericUnmorph a"}
+- warn: {lhs: "K1 (morph a)", rhs: "genericMorph a"}
+- warn: {lhs: "unmorph' (Proxy @(IsMophableTuple t))", rhs: "flatUnmorph"}
+- warn: {lhs: "morph' (Proxy @(IsMophableTuple t))", rhs: "flatMorph"}
 
 # hints found in src/Data/Isoparsec.hs
 - warn: {lhs: "a <+^ konst ()", rhs: "opt a"}
-- warn: {lhs: "(b >>^ turn (konst a)) <+^ konst ()", rhs: "opt' a b"}
+- warn: {lhs: "opt (b >>^ turn (konst a))", rhs: "opt' a b"}
 - warn: {lhs: "(a &&& (repeating a <+^ konst [])) >>^ siCons", rhs: "repeating a"}
-- fixity: "infixl 0 <.>"
-- warn: {lhs: "(b >>^ morphed) >>^ si a", rhs: "a <.> b"}
+- warn: {lhs: "sepBy1 a b <+^ konst []", rhs: "sepBy a b"}
+- warn: {lhs: "(b &&& repeating (a *>> b) <+^ konst []) >>^ siCons", rhs: "sepBy1 a b"}
+- infix: "infixl 0 <.>"
+- warn: {lhs: "(b >>^ morphed) >>^ siPrism a", rhs: "(<.>) a b"}
 - warn: {lhs: "withPrism a\n  (\\ x y -> SemiIso (pure . x) (either (const empty) pure . y))", rhs: "siPrism a"}
-- infix: "infixl 7 ~>"
-- infix: "infixl 7 ~>^"
-- infix: "infixl 7 ^~>"
-- warn: {lhs: "turn siHFst ^>> (makeHListable a *** makeHListable b) >>^ siHFst", rhs: "(~>) a b"}
-- warn: {lhs: "makeHListable a >>> makeHListable b", rhs: "(~>) a b"}
-- warn: {lhs: "makeHListable a >>> makeHListable b", rhs: "(~>) a b"}
+- infix: "infixl 8 ~>"
+- infix: "infixl 8 ~>^"
+- infix: "infixl 8 ^~>"
+- infix: "infixl 8 ^~>^"
+- warn: {lhs: "turn siHFst ^>> (enlist a *** enlist b) >>^ siHFst", rhs: "(~>) a b"}
+- warn: {lhs: "enlist a >>> enlist b", rhs: "(~>) a b"}
+- warn: {lhs: "enlist a >>> enlist b", rhs: "(~>) a b"}
 - warn: {lhs: "siPure fst (, HNil)", rhs: "siHFst"}
-- warn: {lhs: "siPure snd (HNil,)", rhs: "siHSnd"}
-- warn: {lhs: "makeHListable a >>> makeHListable (arr b)", rhs: "(~>^) a b"}
-- warn: {lhs: "makeHListable (arr a) >>> makeHListable b", rhs: "(^~>) a b"}
-- infix: "infixl 5 <~>"
-- warn: {lhs: "makeHListable a <+> makeHListable b", rhs: "(<~>) a b"}
-- infix: "infixl 3 &~&"
-- warn: {lhs: "(makeHListable a &&& makeHListable b) >>^ consHList", rhs: "(&~&) a b"}
+- warn: {lhs: "enlist a >>> enlist (arr b)", rhs: "(~>^) a b"}
+- warn: {lhs: "enlist (arr a) >>> enlist b", rhs: "(^~>) a b"}
+- warn: {lhs: "(enlist . arr) (a >>> b)", rhs: "(^~>^) a b"}
+- infix: "infixl 5 ~|"
+- warn: {lhs: "enlist a <+> enlist b", rhs: "(~|) a b"}
+- infix: "infixl 7 ~&"
+- warn: {lhs: "(enlist a &&& enlist b) >>^ consHList", rhs: "(~&) a b"}
+- infix: "infixl 9 ~*"
+- warn: {lhs: "turn consHList ^>> (enlist a *** enlist b) >>^ consHList", rhs: "(~*) a b"}
+- infix: "infixl 6 ~$>"
+- warn: {lhs: "enlist a >>> enlist (arr (siPrism b))", rhs: "(~$>) a b"}
+- warn: {lhs: "turn fMorphed ^>>\n  (a (fMorphed ^>> b >>^ turn fMorphed)) >>^ fMorphed", rhs: "hmap a b"}
 - warn: {lhs: "siPure coerce coerce", rhs: "coercing"}
 - warn: {lhs: "siPure morphTuples morphTuples", rhs: "morphed"}
 - warn: {lhs: "siPure flatUnmorph flatMorph", rhs: "fMorphed"}
-- warn: {lhs: "turn fMorphed ^>> a >>^ fMorphed", rhs: "makeHListable a"}
-- warn: {lhs: "fMorphed ^>> a >>^ turn fMorphed", rhs: "destructHList a"}
+- warn: {lhs: "turn fMorphed ^>> a >>^ fMorphed", rhs: "enlist a"}
+- warn: {lhs: "fMorphed ^>> a >>^ turn fMorphed", rhs: "delist a"}
 - warn: {lhs: "siPure (uncurry (++:))\n  (\\ c -> (hTake @(Length a) Proxy c, hDrop @(Length a) Proxy c))", rhs: "consHList"}
 - warn: {lhs: "auto @x >>^ turn (konst a)", rhs: "specific a"}
-- warn: {lhs: "arr (siPure fromIntegral fromIntegral)", rhs: "throughIntegral"}
+- warn: {lhs: "siPure fromIntegral fromIntegral", rhs: "throughIntegral"}
 
 # hints found in src/Data/Isoparsec/ByteString.hs
-- warn: {lhs: "arr (siPure C.unpack C.pack)", rhs: "utf8"}
+- warn: {lhs: "siPure C.unpack C.pack", rhs: "utf8"}
 - warn: {lhs: "bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte16 e) @Word16", rhs: "toIsoparsec"}
 - warn: {lhs: "bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte32 e) @Word32", rhs: "toIsoparsec"}
 - warn: {lhs: "bytesToIsoparsec (Proxy @e) >>^ coercing @(Byte64 e) @Word64", rhs: "toIsoparsec"}
 - warn: {lhs: "anyToken >>> mapIso [(0, False), (1, True)]", rhs: "toIsoparsec"}
+- warn: {lhs: "auto @(Byte32 'BE) >>^\n  coercing @Word32 >>^\n    siPure fromIntegral fromIntegral >>>\n      manyTokens >>^ utf8 >>^ siPure SSHString unSSHString", rhs: "toIsoparsec"}
 
 # hints found in src/Data/Isoparsec/Char.hs
 - warn: {lhs: "token ' '", rhs: "space"}
 - warn: {lhs: "tokensWhile isSpace >>^ ((maskr . turn . konst) mempty)", rhs: "unsafeWhiteSpace"}
 - warn: {lhs: "tokensWhile1 isSpace >>^ ((maskr . turn . konst) (singleton ' '))", rhs: "unsafeWhiteSpace1"}
+- warn: {lhs: "tokensWhile1 (\\ c -> isNumber c || c == '+' || c == '-') >>^\n  siMaybe (readMaybe @Integer . otoList) (Just . fromList . show)", rhs: "number"}
 
-# hints found in src/Data/Isoparsec/Cokleisli.hs
-- warn: {lhs: "Cokleisli\n  (\\ t ->\n     case project a t of\n         Just x -> return x\n         Nothing -> mzero)", rhs: "arr a"}
-- warn: {lhs: "Cokleisli (const mzero)", rhs: "zeroArrow"}
+# hints found in src/Data/Isoparsec/Chunks.hs
+- warn: {lhs: "konst (fromIntegral (natVal @n Proxy)) ^>> manyTokens >>^ coercing", rhs: "toIsoparsec"}
 
 # hints found in src/Data/Isoparsec/Internal.hs
 - warn: {lhs: "((a &&& arrowsWhile a) >>^ siCons) <+^ isoConst () []", rhs: "arrowsWhile a"}
+- warn: {lhs: "(arr (konst []) &&& b) <+>\n  (a &&& arrowsUntil a b >>^ (assoc >>> first siCons))", rhs: "arrowsUntil a b"}
 - warn: {lhs: "siMaybe (pure . uncurry cons) uncons", rhs: "siCons"}
-- warn: {lhs: "SI (\\ c -> guard (a c) >> b c)\n  (c >=> (\\ c -> guard (a c) >> pure c))", rhs: "siCheck a b c"}
-- warn: {lhs: "siCheck a (pure . b) (pure . c)", rhs: "isoCheck a b c"}
-- warn: {lhs: "SI (const (pure b)) (const (pure a))", rhs: "isoConst a b"}
-- warn: {lhs: "isoCheck a id id", rhs: "check a"}
-- warn: {lhs: "SI (const (pure a)) (const (pure ())) >>> check (== a)", rhs: "konst a"}
+- warn: {lhs: "raise anyToken", rhs: "anyToken"}
+- warn: {lhs: "raise token'", rhs: "token'"}
+- warn: {lhs: "raise (tokens a)", rhs: "tokens a"}
+- warn: {lhs: "raise tokens'", rhs: "tokens'"}
+- warn: {lhs: "raise (chunk a)", rhs: "chunk a"}
+- warn: {lhs: "raise chunk'", rhs: "chunk'"}
+- warn: {lhs: "raise (notToken a)", rhs: "notToken a"}
+- warn: {lhs: "raise (tokenWhere a)", rhs: "tokenWhere a"}
+- warn: {lhs: "raise manyTokens", rhs: "manyTokens"}
+- warn: {lhs: "raise (takeUntil a)", rhs: "takeUntil a"}
+- warn: {lhs: "raise (tokensWhile a)", rhs: "tokensWhile a"}
+- warn: {lhs: "raise (tokensWhile1 a)", rhs: "tokensWhile1 a"}
+
+# hints found in src/Data/Isoparsec/Megaparsec.hs
+- warn: {lhs: "Kleisli\n  (\\ t ->\n     case embed a t of\n         Just x -> return x\n         Nothing -> M.failure Nothing mempty)", rhs: "arr a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli) (const anySingle)", rhs: "anyToken"}
+- warn: {lhs: "(MegaparsecParser . Kleisli . const) (M.single a $> ())", rhs: "token a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli) (\\ t -> M.single t $> t)", rhs: "token'"}
+- warn: {lhs: "(MegaparsecParser . Kleisli . const) (M.chunk (fromList a) $> ())", rhs: "tokens a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli) (\\ ts -> M.chunk (fromList ts) $> ts)", rhs: "tokens'"}
+- warn: {lhs: "(MegaparsecParser . Kleisli . const) (M.chunk a $> ())", rhs: "chunk a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli) (\\ c -> M.chunk c $> c)", rhs: "chunk'"}
+- warn: {lhs: "(MegaparsecParser . Kleisli . const) (M.anySingleBut a)", rhs: "notToken a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli . const) (satisfy a)", rhs: "tokenWhere a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli) (takeP Nothing . fromIntegral)", rhs: "manyTokens"}
+- warn: {lhs: "(MegaparsecParser . Kleisli)\n  (\\ () ->\n     do ta <- M.manyTill M.anySingle (M.chunk a)\n        return (fromList ta))", rhs: "takeUntil a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli . const) (M.takeWhileP Nothing a)", rhs: "tokensWhile a"}
+- warn: {lhs: "(MegaparsecParser . Kleisli . const) (M.takeWhile1P Nothing a)", rhs: "tokensWhile1 a"}
+
+# hints found in src/Data/Isoparsec/Printer.hs
+- warn: {lhs: "fmap getDual ((execWriterT . runCokleisli (unMonoidPrinter a)) b)", rhs: "runMonoidPrinter a b"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli) (tell . Dual . singleton)", rhs: "anyToken"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli) (const ((tell . Dual . singleton) a))", rhs: "token a"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ t -> (tell . Dual . singleton) t $> t)", rhs: "token'"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli) (const ((tell . Dual . fromList) a))", rhs: "tokens a"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ ts -> (tell . Dual . fromList) ts $> ts)", rhs: "tokens'"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli . const) ((tell . Dual) a)", rhs: "chunk a"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli) (\\ c -> (tell . Dual) c $> c)", rhs: "chunk'"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ t -> if t == a then empty else (tell . Dual . singleton) t)", rhs: "notToken a"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ t -> if a t then (tell . Dual . singleton) t else empty)", rhs: "tokenWhere a"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ w ->\n     do tell (Dual w)\n        (return . fromIntegral . olength) w)", rhs: "manyTokens"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ s ->\n     if length ((((split . onSublist) (otoList a)) . otoList) s) > 1\n       then empty else\n       do (tell . Dual) s\n          (tell . Dual) a)", rhs: "takeUntil a"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ s -> if oall a s then (tell . Dual) s else empty)", rhs: "tokensWhile a"}
+- warn: {lhs: "(MonoidPrinter . Cokleisli)\n  (\\ s ->\n     if oall a s && not (onull s) then (tell . Dual) s else empty)", rhs: "tokensWhile1 a"}
+
+# hints found in src/Data/Isoparsec/ToIsoparsec.hs
+- warn: {lhs: "arr (konst U1)", rhs: "gToIsoparsec"}
+- warn: {lhs: "toIsoparsec >>^ siPure K1 unK1", rhs: "gToIsoparsec"}
+- warn: {lhs: "gToIsoparsec >>^ siPure M1 unM1", rhs: "gToIsoparsec"}
+- warn: {lhs: "(gToIsoparsec &&& gToIsoparsec) >>^\n  SI (\\ (a, b) -> pure (a :*: b)) (\\ (a :*: b) -> pure (a, b))", rhs: "gToIsoparsec"}
