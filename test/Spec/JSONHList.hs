@@ -64,7 +64,7 @@ instance ToIsoparsec JSON String a where
   toIsoparsec = json
 
 json :: forall m. Isoparsec m String => m () JSON
-json = destructHList $ string ~| array ~| integer ~| object
+json = delist $ string ~| array ~| integer ~| object
   where
     string' :: Listed m () String
     string' = token '"' ~> tokensWhile (/= '"') ~> token '"'

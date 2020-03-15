@@ -35,7 +35,7 @@ data MessageNumber
 
 instance ToIsoparsec MessageNumber ByteString a where
   toIsoparsec =
-    destructHList $
+    delist $
       anyToken
         ~> mapIso
           [ (1 :: Word8, DisconnectMsg),
@@ -93,7 +93,7 @@ makePrisms ''Payload
 
 instance ToIsoparsec Payload ByteString a where
   toIsoparsec =
-    destructHList $
+    delist $
       specific DisconnectMsg ~> auto @DisconnectReasonCode
         ~& tokensWhile (const True)
           ~>^ utf8
@@ -121,7 +121,7 @@ newtype ZeroPadding = ZeroPadding {zeroPaddingLength :: Byte8}
 
 badZeroPadding :: Isoparsec m ByteString => m Byte8 ZeroPadding
 badZeroPadding =
-  destructHList $
+  delist $
     throughIntegral
       ^~> manyTokens
       ~>^ siPure
@@ -151,7 +151,7 @@ makePrisms ''Packet
 
 instance ToIsoparsec (Packet NoneMAC) ByteString a where
   toIsoparsec =
-    destructHList $
+    delist $
       ( ( (auto @(Byte32 'BE) ~* anyToken)
             ~> (arr (throughIntegral @(Byte32 'BE) @Natural) ~* arr (throughIntegral @Byte8 @Natural))
             ~>^ siPure

@@ -24,8 +24,8 @@ module Data.Isoparsec
     (~&),
     (~*),
     siPrism,
-    destructHList,
-    makeHListable,
+    delist,
+    enlist,
     Listed,
     hmap,
   )
@@ -83,6 +83,9 @@ type family BothEmpty a b where
   BothEmpty _ _ = 'False
 
 class BothEmpty c' d' ~ flag => SmartCompose b' c' d' flag | c' d' -> flag where
+  -- | Conceptually an analog to '>>>':
+  --
+  -- > Listed m a b -> Listed m b c -> Listed m a c
   (~>) ::
     ( PolyArrow SemiIso m,
       FlatMorphable a a' fa,
@@ -95,17 +98,20 @@ class BothEmpty c' d' ~ flag => SmartCompose b' c' d' flag | c' d' -> flag where
     m (HList a') (HList (If flag b' d'))
 
 instance SmartCompose b '[] '[] 'True where
-  (~>) lhs rhs = turn siHFst ^>> (makeHListable lhs *** makeHListable rhs) >>^ siHFst
+  (~>) lhs rhs = turn siHFst ^>> (enlist lhs *** enlist rhs) >>^ siHFst
 
 instance SmartCompose (c ': cc) (c ': cc) d 'False where
-  (~>) lhs rhs = makeHListable lhs >>> makeHListable rhs
+  (~>) lhs rhs = enlist lhs >>> enlist rhs
 
 instance SmartCompose '[] '[] (d ': dd) 'False where
-  (~>) lhs rhs = makeHListable lhs >>> makeHListable rhs
+  (~>) lhs rhs = enlist lhs >>> enlist rhs
 
 siHFst :: SemiIso (a, HList '[]) a
 siHFst = siPure fst (,HNil)
 
+-- | Conceptually an analog to '>>^':
+--
+-- > Listed m a b -> SemiIso b c -> Listed m a c
 (~>^) ::
   ( PolyArrow SemiIso m,
     FlatMorphable a a' fa,
@@ -116,8 +122,11 @@ siHFst = siPure fst (,HNil)
   m a b ->
   SemiIso c d ->
   m (HList a') (HList d')
-lhs ~>^ rhs = makeHListable lhs >>> makeHListable (arr rhs)
+lhs ~>^ rhs = enlist lhs >>> enlist (arr rhs)
 
+-- | Conceptually an analog to '^>>':
+--
+-- > SemiIso a b -> Listed m b c -> Listed m a c
 (^~>) ::
   ( PolyArrow SemiIso m,
     FlatMorphable a a' 'False,
@@ -128,8 +137,11 @@ lhs ~>^ rhs = makeHListable lhs >>> makeHListable (arr rhs)
   SemiIso a b ->
   m c d ->
   m (HList a') (HList d')
-lhs ^~> rhs = makeHListable (arr lhs) >>> makeHListable rhs
+lhs ^~> rhs = enlist (arr lhs) >>> enlist rhs
 
+-- | Conceptually an analog to '^>^':
+--
+-- > SemiIso a b -> SemiIso b c -> Listed m a c
 (^~>^) ::
   ( PolyArrow SemiIso m,
     FlatMorphable a a' 'False,
@@ -139,10 +151,13 @@ lhs ^~> rhs = makeHListable (arr lhs) >>> makeHListable rhs
   SemiIso a b ->
   SemiIso b d ->
   m (HList a') (HList d')
-lhs ^~>^ rhs = makeHListable . arr $ lhs >>> rhs
+lhs ^~>^ rhs = enlist . arr $ lhs >>> rhs
 
 infixl 5 ~|
 
+-- | Conceptually an analog to '<+>':
+--
+-- > Listed m a b -> Listed m a b -> Listed m a b
 (~|) ::
   ( PolyArrow SemiIso m,
     ArrowPlus m,
@@ -154,10 +169,13 @@ infixl 5 ~|
   m a b ->
   m c d ->
   m (HList ac) (HList bd)
-lhs ~| rhs = makeHListable lhs <+> makeHListable rhs
+lhs ~| rhs = enlist lhs <+> enlist rhs
 
 infixl 7 ~&
 
+-- | Conceptually an analog to '&&&':
+--
+-- > Listed m a b -> Listed m a c -> Listed m a (b, c)
 (~&) ::
   ( PolyArrow SemiIso m,
     FlatMorphable a ac' fa,
@@ -169,10 +187,13 @@ infixl 7 ~&
   m a b ->
   m c d ->
   m (HList ac') (HList f)
-lhs ~& rhs = (makeHListable lhs &&& makeHListable rhs) >>^ consHList
+lhs ~& rhs = (enlist lhs &&& enlist rhs) >>^ consHList
 
 infixl 9 ~*
 
+-- | Conceptually an analog to '***':
+--
+-- > Listed m a b -> Listed m c d -> Listed m (a, b) (c, d)
 (~*) ::
   ( PolyArrow SemiIso m,
     FlatMorphable a a' fa,
@@ -185,7 +206,7 @@ infixl 9 ~*
   m a b ->
   m c d ->
   m (HList e') (HList f')
-lhs ~* rhs = turn consHList ^>> (makeHListable lhs *** makeHListable rhs) >>^ consHList
+lhs ~* rhs = turn consHList ^>> (enlist lhs *** enlist rhs) >>^ consHList
 
 infixl 6 ~$>
 
@@ -199,8 +220,11 @@ infixl 6 ~$>
   m a b ->
   Prism' c d ->
   m (HList a') (HList d')
-lhs ~$> rhs = makeHListable lhs >>> makeHListable (arr (siPrism rhs))
+lhs ~$> rhs = enlist lhs >>> enlist (arr (siPrism rhs))
 
+-- | Conceptually:
+--
+-- > (m a b -> m c d) -> Listed m a b -> Listed m c d
 hmap ::
   ( FlatMorphable b b' fb,
     FlatMorphable a a' fa,
@@ -222,13 +246,19 @@ morphed = siPure morphTuples morphTuples
 fMorphed :: (FlatMorphable a b fa) => SemiIso a (HList b)
 fMorphed = siPure flatUnmorph flatMorph
 
-makeHListable ::
+-- | Conceptually:
+--
+-- > m a b -> Listed m a b
+enlist ::
   (FlatMorphable a a' fa, FlatMorphable b b' fb, PolyArrow SemiIso m) =>
   m a b ->
   m (HList a') (HList b')
-makeHListable m = turn fMorphed ^>> m >>^ fMorphed
+enlist m = turn fMorphed ^>> m >>^ fMorphed
 
-destructHList ::
+-- | Conceptually:
+--
+-- > Listed m a b -> m a b
+delist ::
   ( FlatMorphable a a' 'False,
     FlatMorphable b b' 'False,
     PolyArrow SemiIso m,
@@ -239,7 +269,7 @@ destructHList ::
   ) =>
   m (HList a') (HList b') ->
   m a b
-destructHList m = fMorphed ^>> m >>^ turn fMorphed
+delist m = fMorphed ^>> m >>^ turn fMorphed
 
 consHList ::
   forall a b c.
