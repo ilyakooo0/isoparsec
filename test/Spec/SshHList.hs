@@ -95,23 +95,23 @@ instance ToIsoparsec Payload ByteString a where
   toIsoparsec =
     destructHList $
       specific DisconnectMsg ~> auto @DisconnectReasonCode
-        &~& tokensWhile (const True)
+        ~& tokensWhile (const True)
           ~>^ utf8
             ~$> _DisconnectPayload
-        <+> specific ServiceRequestMsg ~> auto @SSHString ~$> _ServiceRequest
-        <+> chunk "SSH-2.0-"
+        ~| specific ServiceRequestMsg ~> auto @SSHString ~$> _ServiceRequest
+        ~| chunk "SSH-2.0-"
           ~> tokensWhile (`BS.notElem` " \n\r")
           ~>^ utf8
             ~> ( chunk " " ~> takeUntil "\r\n" ~>^ (maskr . turn . konst $ ("" :: ByteString))
-                   <~> chunk "\r\n"
+                   ~| chunk "\r\n"
                )
             ~$> _VersionPayload
-        <+> specific IgnoreMsg ~> tokensWhile (const True) ~$> _IgnorePayload
-        <+> specific DebugMsg ~> auto @AlwaysDisplay
-        &~& auto @SSHString
+        ~| specific IgnoreMsg ~> tokensWhile (const True) ~$> _IgnorePayload
+        ~| specific DebugMsg ~> auto @AlwaysDisplay
+        ~& auto @SSHString
           ~$> _DebugPayload
-        <+> specific UnimplementedMsg ~> auto @PacketSequenceNumber ~$> _UnimplementedPayload
-        <+> specific ServiceAcceptMsg ~> auto @SSHString ~$> _ServiceAccept
+        ~| specific UnimplementedMsg ~> auto @PacketSequenceNumber ~$> _UnimplementedPayload
+        ~| specific ServiceAcceptMsg ~> auto @SSHString ~$> _ServiceAccept
 
 newtype Padding = Padding {unPadding :: ByteString}
   deriving (Eq, Ord, Show, Generic, Arbitrary)
@@ -152,15 +152,15 @@ makePrisms ''Packet
 instance ToIsoparsec (Packet NoneMAC) ByteString a where
   toIsoparsec =
     destructHList $
-      ( ( (auto @(Byte32 'BE) *~* anyToken)
-            ~> (arr (throughIntegral @(Byte32 'BE) @Natural) *~* arr (throughIntegral @Byte8 @Natural))
+      ( ( (auto @(Byte32 'BE) ~* anyToken)
+            ~> (arr (throughIntegral @(Byte32 'BE) @Natural) ~* arr (throughIntegral @Byte8 @Natural))
             ~>^ siPure
               (\(packetL, paddingL :: Natural) -> (packetL - paddingL - 1 :: Natural, paddingL :: Natural))
               (\(payloadL, paddingL) -> (payloadL + paddingL + 1, paddingL))
-            ~> (manyTokens *~* arr (throughIntegral @Natural @Byte8))
-            ~> (tuck (auto @Payload) *~* badZeroPadding)
+            ~> (manyTokens ~* arr (throughIntegral @Natural @Byte8))
+            ~> (tuck (auto @Payload) ~* badZeroPadding)
         )
-          &~& auto @NoneMAC
+          ~& auto @NoneMAC
       )
         ~$> _Packet
 

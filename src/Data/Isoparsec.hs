@@ -17,10 +17,10 @@ module Data.Isoparsec
     (~>^),
     (^~>),
     (^~>^),
-    (<~>),
+    (~|),
     (~$>),
-    (&~&),
-    (*~*),
+    (~&),
+    (~*),
     siPrism,
     destructHList,
     makeHListable,
@@ -129,9 +129,9 @@ lhs ^~> rhs = makeHListable (arr lhs) >>> makeHListable rhs
   m (HList a') (HList d')
 lhs ^~>^ rhs = makeHListable . arr $ lhs >>> rhs
 
-infixl 6 <~>
+infixl 5 ~|
 
-(<~>) ::
+(~|) ::
   ( PolyArrow SemiIso m,
     ArrowPlus m,
     FlatMorphable a ac fa,
@@ -142,11 +142,11 @@ infixl 6 <~>
   m a b ->
   m c d ->
   m (HList ac) (HList bd)
-lhs <~> rhs = makeHListable lhs <+> makeHListable rhs
+lhs ~| rhs = makeHListable lhs <+> makeHListable rhs
 
-infixl 7 &~&
+infixl 7 ~&
 
-(&~&) ::
+(~&) ::
   ( PolyArrow SemiIso m,
     FlatMorphable a ac' fa,
     FlatMorphable c ac' fc,
@@ -157,11 +157,11 @@ infixl 7 &~&
   m a b ->
   m c d ->
   m (HList ac') (HList f)
-lhs &~& rhs = (makeHListable lhs &&& makeHListable rhs) >>^ consHList
+lhs ~& rhs = (makeHListable lhs &&& makeHListable rhs) >>^ consHList
 
-infixl 9 *~*
+infixl 9 ~*
 
-(*~*) ::
+(~*) ::
   ( PolyArrow SemiIso m,
     FlatMorphable a a' fa,
     FlatMorphable c c' fc,
@@ -173,7 +173,7 @@ infixl 9 *~*
   m a b ->
   m c d ->
   m (HList e') (HList f')
-lhs *~* rhs = turn consHList ^>> (makeHListable lhs *** makeHListable rhs) >>^ consHList
+lhs ~* rhs = turn consHList ^>> (makeHListable lhs *** makeHListable rhs) >>^ consHList
 
 infixl 6 ~$>
 
