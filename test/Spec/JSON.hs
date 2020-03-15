@@ -13,7 +13,6 @@ import Data.Isoparsec.Char
 import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
-import Data.Void
 import Spec.Helper
 import Test.Hspec
 import Test.Tasty
@@ -56,8 +55,8 @@ spec =
 quickSpec :: TestTree
 quickSpec =
   testProperty "roundtrips" $ \x ->
-    let s = fromJust $ runPrinter @Maybe @String json x
-     in counterexample s $ case runMegaparsec @Void s json of
+    let s = fromJust $ runMonoidPrinter @String json x
+     in counterexample s $ case runMegaparsecParser s json of
           Right y -> property $ x == y
           Left err -> counterexample (errorBundlePretty err) False
 

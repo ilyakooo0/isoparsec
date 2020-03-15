@@ -11,7 +11,6 @@ import Data.Isoparsec.Chunks
 import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
-import Data.Void
 import GHC.Generics
 import Test.Hspec
 import Test.Tasty
@@ -52,18 +51,18 @@ spec :: Spec
 spec = do
   let parser = toIsoparsec @_ @String
   it "deserializes" $ do
-    runMegaparsec @() "12" parser `shouldBe` Right (TwoDigits (SingleDigit "1") (SingleDigit "2"))
-    runMegaparsec @() "125" parser `shouldBe` Right (ThreeDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5"))
-    runMegaparsec @() "1253" parser `shouldBe` Right (FourDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5") (SingleDigit "3"))
-    runMegaparsec @() "12538" parser `shouldSatisfy` isLeft
-    runMegaparsec @() "2" parser `shouldSatisfy` isLeft
-    runMegaparsec @() "a" parser `shouldSatisfy` isLeft
-    runMegaparsec @() "1a" parser `shouldSatisfy` isLeft
+    runMegaparsecParser "12" parser `shouldBe` Right (TwoDigits (SingleDigit "1") (SingleDigit "2"))
+    runMegaparsecParser "125" parser `shouldBe` Right (ThreeDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5"))
+    runMegaparsecParser "1253" parser `shouldBe` Right (FourDigits (SingleDigit "1") (SingleDigit "2") (SingleDigit "5") (SingleDigit "3"))
+    runMegaparsecParser "12538" parser `shouldSatisfy` isLeft
+    runMegaparsecParser "2" parser `shouldSatisfy` isLeft
+    runMegaparsecParser "a" parser `shouldSatisfy` isLeft
+    runMegaparsecParser "1a" parser `shouldSatisfy` isLeft
 
 quickSpec :: TestTree
 quickSpec = testProperty "roundtrips" $ \x ->
-  let s = fromJust $ runPrinter @Maybe @String parser x
-   in counterexample s $ case runMegaparsec @Void s parser of
+  let s = fromJust $ runMonoidPrinter @String parser x
+   in counterexample s $ case runMegaparsecParser s parser of
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False
   where

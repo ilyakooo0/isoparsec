@@ -1,8 +1,9 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Isoparsec.Megaparsec
-  ( runMegaparsec,
-    runMegaparsecT,
+  ( runMegaparsecParser,
+    ParseErrorBundle (..),
+    MegaparsecParser (..),
   )
 where
 
@@ -10,24 +11,30 @@ import Control.Arrow.Extra
 import Control.Arrow.Extra.Orphans ()
 import Control.Monad
 import Data.Functor
-import Data.Isoparsec.Internal as I
+import Data.Functor.Identity
+import Data.Isoparsec
+import Data.Void
 import Text.Megaparsec hiding (Token)
 import qualified Text.Megaparsec as M
 import Prelude hiding ((.))
 
-runMegaparsec ::
-  (Ord e, Stream s) =>
-  s ->
-  Kleisli (Parsec e s) () r ->
-  Either (ParseErrorBundle s e) r
-runMegaparsec s (Kleisli f) = runParser (f () <* eof) "" s
+newtype MegaparsecParser s a b
+  = MegaparsecParser {unMegaparsecParser :: Kleisli (ParsecT Void s Identity) a b}
+  deriving (Category, BaseArrow, ArrowZero, ArrowChoice, PolyArrow SemiIso)
 
-runMegaparsecT ::
-  (Ord e, Stream s, Monad m) =>
+instance
+  (Stream s, s ~ M.Tokens s, Element s ~ M.Token s) =>
+  ArrowPlus (MegaparsecParser s)
+  where
+  (MegaparsecParser (Kleisli lhs)) <+> (MegaparsecParser (Kleisli rhs)) =
+    MegaparsecParser . Kleisli $ \x -> try (lhs x) <|> rhs x
+
+runMegaparsecParser ::
+  (Stream s) =>
   s ->
-  Kleisli (ParsecT e s m) () r ->
-  m (Either (ParseErrorBundle s e) r)
-runMegaparsecT s (Kleisli f) = runParserT (f () <* eof) "" s
+  MegaparsecParser s () r ->
+  Either (ParseErrorBundle s Void) r
+runMegaparsecParser s (MegaparsecParser (Kleisli f)) = runParser (f () <* eof) "" s
 
 instance (MonadParsec e s m) => PolyArrow SemiIso (Kleisli m) where
   arr si = Kleisli $ \t -> case embed si t of
@@ -35,24 +42,47 @@ instance (MonadParsec e s m) => PolyArrow SemiIso (Kleisli m) where
     Nothing -> M.failure Nothing mempty
 
 instance
-  (MonadParsec e s m, M.Token s ~ Element s, s ~ M.Tokens s, IsSequence s) =>
-  Isoparsec (Kleisli m) s
+  (Stream s, M.Token s ~ Element s, s ~ M.Tokens s, IsSequence s) =>
+  Isoparsec (MegaparsecParser s) s
   where
-  anyToken = Kleisli $ const anySingle
+  anyToken = MegaparsecParser . Kleisli $ const anySingle
 
-  token t = Kleisli . const $ M.single t $> ()
+  token t = MegaparsecParser . Kleisli . const $ M.single t $> ()
 
-  manyTokens = Kleisli $ takeP Nothing . fromIntegral
+  token' = MegaparsecParser . Kleisli $ \t -> M.single t $> t
 
-  tuck' (Kleisli f) = Kleisli $ \(x, sub) -> do
+  tokens ts = MegaparsecParser . Kleisli . const $ M.chunk (fromList ts) $> ()
+
+  tokens' = MegaparsecParser . Kleisli $ \ts -> M.chunk (fromList ts) $> ts
+
+  chunk c = MegaparsecParser . Kleisli . const $ M.chunk c $> ()
+
+  chunk' = MegaparsecParser . Kleisli $ \c -> M.chunk c $> c
+
+  notToken t = MegaparsecParser . Kleisli . const $ M.anySingleBut t
+
+  tokenWhere f = MegaparsecParser . Kleisli . const $ satisfy f
+
+  manyTokens = MegaparsecParser . Kleisli $ takeP Nothing . fromIntegral
+
+  takeUntil c = MegaparsecParser . Kleisli $ \() -> do
+    ta <- M.manyTill M.anySingle (M.chunk c)
+    return $ fromList ta
+
+  tokensWhile f = MegaparsecParser . Kleisli . const $ M.takeWhileP Nothing f
+
+  tokensWhile1 f = MegaparsecParser . Kleisli . const $ M.takeWhile1P Nothing f
+
+  tuck (MegaparsecParser (Kleisli f)) = MegaparsecParser . Kleisli $ \sub -> do
+    sup <- getInput
+    setInput sub
+    r <- f () <* eof
+    setInput sup
+    return r
+
+  tuck' (MegaparsecParser (Kleisli f)) = MegaparsecParser . Kleisli $ \(x, sub) -> do
     sup <- getInput
     setInput sub
     r <- f x <* eof
     setInput sup
     return r
-
-instance MonadParsec e s m => IsoparsecFail (Kleisli m) e where
-  failure e = Kleisli $ \_ -> customFailure e
-
-instance (MonadParsec e s m, M.Token s ~ Element s, s ~ M.Tokens s) => ArrowPlus (Kleisli m) where
-  (Kleisli lhs) <+> (Kleisli rhs) = Kleisli $ \x -> try (lhs x) <|> rhs x

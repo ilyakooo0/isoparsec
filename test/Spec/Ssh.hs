@@ -153,7 +153,7 @@ makePrisms ''Packet
 
 instance ToIsoparsec mac ByteString a => ToIsoparsec (Packet mac) ByteString a where
   toIsoparsec =
-    ( auto @(Byte32 'BE) &&& auto @Byte8
+    ( auto @(Byte32 'BE) &&& anyToken
         >>> throughIntegral *** throughIntegral
         >>^ siPure
           (\(packetL, paddingL) -> (packetL - paddingL - 1, paddingL))

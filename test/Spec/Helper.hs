@@ -6,8 +6,6 @@ module Spec.Helper
   )
 where
 
-import Control.Cokleisli
-import Control.Monad.Writer.Lazy
 import Data.ByteString as BS
 import Data.Either
 import Data.Isoparsec as I
@@ -23,23 +21,23 @@ import Prelude as P hiding ((.))
 
 parseSatisfy ::
   forall x s.
-  ( ToIsoparsec x s (Kleisli (Parsec Void s)),
+  ( ToIsoparsec x s (MegaparsecParser s),
     Stream s,
     Show x,
     Show (M.Token s),
     Show s,
-    Isoparsec (Kleisli (Parsec Void s)) s
+    Isoparsec (MegaparsecParser s) s
   ) =>
   s ->
   (Either (ParseErrorBundle s Void) x -> Bool) ->
   Expectation
-parseSatisfy s p = runMegaparsec @Void @s s toIsoparsec `shouldSatisfy` p
+parseSatisfy s p = runMegaparsecParser @s s toIsoparsec `shouldSatisfy` p
 
 parseSatisfyBS ::
   forall x.
-  ( ToIsoparsec x ByteString (Kleisli (Parsec Void ByteString)),
+  ( ToIsoparsec x ByteString (MegaparsecParser ByteString),
     Show x,
-    Isoparsec (Kleisli (Parsec Void ByteString)) ByteString
+    Isoparsec (MegaparsecParser ByteString) ByteString
   ) =>
   ByteString ->
   (Either (ParseErrorBundle ByteString Void) x -> Bool) ->
@@ -48,25 +46,25 @@ parseSatisfyBS = parseSatisfy
 
 shouldParse ::
   forall x s.
-  ( ToIsoparsec x s (Kleisli (Parsec Void s)),
+  ( ToIsoparsec x s (MegaparsecParser s),
     Stream s,
     Show x,
     Eq x,
-    Isoparsec (Kleisli (Parsec Void s)) s
+    Isoparsec (MegaparsecParser s) s
   ) =>
   s ->
   x ->
   Expectation
-shouldParse s e = case runMegaparsec @Void @s s toIsoparsec of
+shouldParse s e = case runMegaparsecParser @s s toIsoparsec of
   Right e' -> e' `shouldBe` e
   Left err -> expectationFailure $ errorBundlePretty err
 
 shouldParseBS ::
   forall x.
-  ( ToIsoparsec x ByteString (Kleisli (Parsec Void ByteString)),
+  ( ToIsoparsec x ByteString (MegaparsecParser ByteString),
     Show x,
     Eq x,
-    Isoparsec (Kleisli (Parsec Void ByteString)) ByteString
+    Isoparsec (MegaparsecParser ByteString) ByteString
   ) =>
   ByteString ->
   x ->
@@ -75,10 +73,10 @@ shouldParseBS = shouldParse
 
 shouldParseS ::
   forall x.
-  ( ToIsoparsec x String (Kleisli (Parsec Void String)),
+  ( ToIsoparsec x String (MegaparsecParser String),
     Show x,
     Eq x,
-    Isoparsec (Kleisli (Parsec Void String)) String
+    Isoparsec (MegaparsecParser String) String
   ) =>
   String ->
   x ->
@@ -87,19 +85,18 @@ shouldParseS = shouldParse
 
 roundtrip ::
   forall x s.
-  ( ToIsoparsec x s (Kleisli (Parsec Void s)),
-    ToIsoparsec x s (Cokleisli (WriterT (Dual s) Maybe)),
+  ( ToIsoparsec x s (MegaparsecParser s),
+    ToIsoparsec x s (MonoidPrinter s),
     Stream s,
     Show s,
     I.Element s ~ M.Token s,
     Eq x,
-    Eq s,
-    Isoparsec (Kleisli (Parsec Void s)) s
+    Isoparsec (MegaparsecParser s) s
   ) =>
   x ->
   Property
 roundtrip x =
-  let s = fromJust $ runPrinter @Maybe @s toIsoparsec x
-   in counterexample (show s) $ case runMegaparsec @Void @s s toIsoparsec of
+  let s = fromJust $ runMonoidPrinter @s toIsoparsec x
+   in counterexample (show s) $ case runMegaparsecParser @s s toIsoparsec of
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False

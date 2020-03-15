@@ -28,6 +28,7 @@ dependencies:
 - mtl
 - profunctors
 - mono-traversable
+- split
 
 library:
   source-dirs: src

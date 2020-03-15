@@ -13,7 +13,6 @@ import Data.Isoparsec.Char
 import Data.Isoparsec.Megaparsec
 import Data.Isoparsec.Printer
 import Data.Maybe
-import Data.Void
 import Test.Hspec
 import Test.Tasty
 import Test.Tasty.QuickCheck
@@ -34,13 +33,13 @@ parser = _Foo <.> (number &&& unsafeWhiteSpace1 &&& number)
 spec :: Spec
 spec =
   it "deserializes" $ do
-    runMegaparsec @() "12 31" parser `shouldBe` Right (Foo 12 31)
-    runMegaparsec @() "1   33" parser `shouldBe` Right (Foo 1 33)
-    runMegaparsec @() "1562" parser `shouldSatisfy` isLeft
+    runMegaparsecParser "12 31" parser `shouldBe` Right (Foo 12 31)
+    runMegaparsecParser "1   33" parser `shouldBe` Right (Foo 1 33)
+    runMegaparsecParser "1562" parser `shouldSatisfy` isLeft
 
 quickSpec :: TestTree
 quickSpec = testProperty "roundtrips" $ \x ->
-  let s = fromJust $ runPrinter @Maybe @String parser x
-   in counterexample s $ case runMegaparsec @Void s parser of
+  let s = fromJust $ runMonoidPrinter @String parser x
+   in counterexample s $ case runMegaparsecParser s parser of
         Right y -> property $ x == y
         Left err -> counterexample (errorBundlePretty err) False
