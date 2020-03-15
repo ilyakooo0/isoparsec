@@ -6,6 +6,7 @@ module Data.Isoparsec.Internal
     unroll,
     arrowsWhile,
     arrowsUntil,
+    EffectOnly,
   )
 where
 
@@ -26,22 +27,22 @@ class
 
   anyToken :: m () (Element s)
 
-  token :: Element s -> m () ()
-  default token :: Eq (Element s) => Element s -> m () ()
+  token :: Element s -> EffectOnly m
+  default token :: Eq (Element s) => Element s -> EffectOnly m
   token x = anyToken >>^ turn (konst x)
 
   token' :: m (Element s) (Element s)
   default token' :: Eq (Element s) => m (Element s) (Element s)
   token' = id >>& anyToken >>^ check (uncurry (==)) >>^ siPure fst (\x -> (x, x))
 
-  tokens :: [Element s] -> m () ()
+  tokens :: [Element s] -> EffectOnly m
   tokens [] = arr $ isoConst () ()
   tokens (t : ts) = token t &&& tokens ts >>^ isoConst ((), ()) ()
 
   tokens' :: m [Element s] [Element s]
   tokens' = (turn siCons ^>> token' *** tokens' >>^ siCons) <+^ isoConst [] []
 
-  chunk :: s -> m () ()
+  chunk :: s -> EffectOnly m
   chunk = tokens . otoList
 
   chunk' :: m s s
@@ -90,6 +91,8 @@ class
   tuck a = turn siSnd ^>> tuck' a
 
   tuck' :: m a b -> m (a, s) b
+
+type EffectOnly m = m () ()
 
 arrowsWhile :: (PolyArrow SemiIso m, ArrowPlus m) => m () a -> m () [a]
 arrowsWhile f = ((f &&& arrowsWhile f) >>^ siCons) <+^ isoConst () []

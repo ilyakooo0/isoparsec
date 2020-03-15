@@ -1,13 +1,15 @@
 module Control.Prism
   ( withPrism,
-    Market,
     Identity,
+    Prism',
   )
 where
 
 import Data.Coerce
 import Data.Functor.Identity
 import Data.Profunctor
+
+type Prism' a b = Market a a a (Identity a) -> Market a a b (Identity b)
 
 data Market a b s t = Market (b -> t) (s -> Either t a)
 

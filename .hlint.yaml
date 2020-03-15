@@ -52,7 +52,7 @@
 # - ignore: {name: Use const, within: SpecialModule} # Only within certain modules
 
 
-# Define some custom infix operators
+# Define some custom fixity operators
 # - fixity: infixr 3 ~^#^~
 
 
@@ -134,14 +134,36 @@
 
 # hints found in src/Data/Isoparsec.hs
 - warn: {lhs: "a <+^ konst ()", rhs: "opt a"}
-- warn: {lhs: "(b >>^ turn (konst a)) <+^ konst ()", rhs: "opt' a b"}
+- warn: {lhs: "opt (b >>^ turn (konst a))", rhs: "opt' a b"}
 - warn: {lhs: "(a &&& (repeating a <+^ konst [])) >>^ siCons", rhs: "repeating a"}
+- warn: {lhs: "sepBy1 a b <+^ konst []", rhs: "sepBy a b"}
+- warn: {lhs: "(b &&& repeating (a *>> b) <+^ konst []) >>^ siCons", rhs: "sepBy1 a b"}
 - fixity: "infixl 0 <.>"
-- warn: {lhs: "(b >>^ morphed) >>^ si a", rhs: "a <.> b"}
+- warn: {lhs: "(b >>^ morphed) >>^ siPrism a", rhs: "a <.> b"}
+- warn: {lhs: "withPrism a\n  (\\ x y -> SemiIso (pure . x) (either (const empty) pure . y))", rhs: "siPrism a"}
+- fixity: "infixl 8 ~>"
+- fixity: "infixl 8 ~>^"
+- fixity: "infixl 8 ^~>"
+- fixity: "infixl 8 ^~>^"
+- warn: {lhs: "turn siHFst ^>> (enlist a *** enlist b) >>^ siHFst", rhs: "a ~> b"}
+- warn: {lhs: "siPure fst (, HNil)", rhs: "siHFst"}
+- fixity: "infixl 5 ~|"
+- warn: {lhs: "enlist a <+> enlist b", rhs: "a ~| b"}
+- fixity: "infixl 7 ~&"
+- warn: {lhs: "(enlist a &&& enlist b) >>^ consHList", rhs: "a ~& b"}
+- fixity: "infixl 9 ~*"
+- warn: {lhs: "turn consHList ^>> (enlist a *** enlist b) >>^ consHList", rhs: "a ~* b"}
+- fixity: "infixl 6 ~$>"
+- warn: {lhs: "enlist a >>> enlist (arr (siPrism b))", rhs: "a ~$> b"}
+- warn: {lhs: "turn fMorphed ^>>\n  (a (fMorphed ^>> b >>^ turn fMorphed)) >>^ fMorphed", rhs: "hmap a b"}
 - warn: {lhs: "siPure coerce coerce", rhs: "coercing"}
 - warn: {lhs: "siPure morphTuples morphTuples", rhs: "morphed"}
+- warn: {lhs: "siPure flatUnmorph flatMorph", rhs: "fMorphed"}
+- warn: {lhs: "turn fMorphed ^>> a >>^ fMorphed", rhs: "enlist a"}
+- warn: {lhs: "fMorphed ^>> a >>^ turn fMorphed", rhs: "delist a"}
+- warn: {lhs: "siPure (uncurry (++:))\n  (\\ c -> (hTake @(Length a) Proxy c, hDrop @(Length a) Proxy c))", rhs: "consHList"}
 - warn: {lhs: "auto @x >>^ turn (konst a)", rhs: "specific a"}
-- warn: {lhs: "arr (siPure fromIntegral fromIntegral)", rhs: "throughIntegral"}
+- warn: {lhs: "siPure fromIntegral fromIntegral", rhs: "throughIntegral"}
 
 # hints found in src/Data/Isoparsec/ByteString.hs
 - warn: {lhs: "arr (siPure C.unpack C.pack)", rhs: "utf8"}
