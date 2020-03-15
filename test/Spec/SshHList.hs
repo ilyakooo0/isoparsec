@@ -152,7 +152,7 @@ makePrisms ''Packet
 instance ToIsoparsec (Packet NoneMAC) ByteString a where
   toIsoparsec =
     destructHList $
-      ( ( (auto @(Byte32 'BE) *~* auto @Byte8)
+      ( ( (auto @(Byte32 'BE) *~* anyToken)
             ~> (arr (throughIntegral @(Byte32 'BE) @Natural) *~* arr (throughIntegral @Byte8 @Natural))
             ~>^ siPure
               (\(packetL, paddingL :: Natural) -> (packetL - paddingL - 1 :: Natural, paddingL :: Natural))
