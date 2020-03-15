@@ -4,6 +4,8 @@ module Data.Isoparsec
   ( module X,
     (<.>),
     repeating,
+    sepBy,
+    sepBy1,
     opt,
     opt',
     morphed,
@@ -24,6 +26,8 @@ module Data.Isoparsec
     siPrism,
     destructHList,
     makeHListable,
+    Listed,
+    hmap,
   )
 where
 
@@ -46,6 +50,12 @@ opt' a m = opt (m >>^ turn (konst a))
 repeating :: (PolyArrow SemiIso m, ArrowPlus m, Eq b) => m () b -> m () [b]
 repeating m = (m &&& (repeating m <+^ konst [])) >>^ siCons
 
+sepBy :: (PolyArrow SemiIso m, ArrowPlus m, Eq a) => m () () -> m () a -> m () [a]
+sepBy sep a = sepBy1 sep a <+^ konst []
+
+sepBy1 :: (PolyArrow SemiIso m, ArrowPlus m, Eq a) => m () () -> m () a -> m () [a]
+sepBy1 sep a = (a &&& repeating (sep *>> a) <+^ konst []) >>^ siCons
+
 infixl 0 <.>
 
 (<.>) ::
@@ -60,6 +70,8 @@ siPrism ::
   SemiIso a b
 siPrism p = withPrism p $ \x y -> SemiIso (pure . x) (either (const empty) pure . y)
 
+type Listed m a b = m (HList (TupleHListContents a)) (HList (TupleHListContents b))
+
 infixl 8 ~>, ~>^, ^~>, ^~>^
 
 type family If cond t f where
@@ -70,7 +82,7 @@ type family BothEmpty a b where
   BothEmpty '[] '[] = 'True
   BothEmpty _ _ = 'False
 
-class BothEmpty c' d' ~ flag => SmartCompose' b' c' d' flag | c' d' -> flag where
+class BothEmpty c' d' ~ flag => SmartCompose b' c' d' flag | c' d' -> flag where
   (~>) ::
     ( PolyArrow SemiIso m,
       FlatMorphable a a' fa,
@@ -82,13 +94,13 @@ class BothEmpty c' d' ~ flag => SmartCompose' b' c' d' flag | c' d' -> flag wher
     m c d ->
     m (HList a') (HList (If flag b' d'))
 
-instance SmartCompose' b '[] '[] 'True where
+instance SmartCompose b '[] '[] 'True where
   (~>) lhs rhs = turn siHFst ^>> (makeHListable lhs *** makeHListable rhs) >>^ siHFst
 
-instance SmartCompose' (c ': cc) (c ': cc) d 'False where
+instance SmartCompose (c ': cc) (c ': cc) d 'False where
   (~>) lhs rhs = makeHListable lhs >>> makeHListable rhs
 
-instance SmartCompose' '[] '[] (d ': dd) 'False where
+instance SmartCompose '[] '[] (d ': dd) 'False where
   (~>) lhs rhs = makeHListable lhs >>> makeHListable rhs
 
 siHFst :: SemiIso (a, HList '[]) a
@@ -188,6 +200,18 @@ infixl 6 ~$>
   Prism' c d ->
   m (HList a') (HList d')
 lhs ~$> rhs = makeHListable lhs >>> makeHListable (arr (siPrism rhs))
+
+hmap ::
+  ( FlatMorphable b b' fb,
+    FlatMorphable a a' fa,
+    FlatMorphable d d' fd,
+    FlatMorphable c c' fc,
+    PolyArrow SemiIso m
+  ) =>
+  (m a b -> m c d) ->
+  m (HList a') (HList b') ->
+  m (HList c') (HList d')
+hmap f m = turn fMorphed ^>> (f $ fMorphed ^>> m >>^ turn fMorphed) >>^ fMorphed
 
 coercing :: forall b a. Coercible a b => SemiIso a b
 coercing = siPure coerce coerce

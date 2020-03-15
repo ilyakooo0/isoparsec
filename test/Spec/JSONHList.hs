@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Spec.JSON
+module Spec.JSONHList
   ( quickSpec,
     spec,
   )
@@ -64,25 +64,29 @@ instance ToIsoparsec JSON String a where
   toIsoparsec = json
 
 json :: forall m. Isoparsec m String => m () JSON
-json = string <+> array <+> integer <+> object
+json = destructHList $ string ~| array ~| integer ~| object
   where
-    string' = token '"' **> tokensWhile (/= '"') >** token '"'
-    string = _JString <.> string'
+    string' :: Listed m () String
+    string' = token '"' ~> tokensWhile (/= '"') ~> token '"'
+    string :: Listed m () JSON
+    string = string' ~$> _JString
+    array :: Listed m () JSON
     array =
-      _Array
-        <.> token '['
-          &&& unsafeWhiteSpace
-          &&& sepByComma json
-          &&& unsafeWhiteSpace
-          &&& token ']'
-    integer = _JInteger <.> number
+      token '['
+        ~> unsafeWhiteSpace
+        ~> sepByComma json
+        ~> unsafeWhiteSpace
+        ~> token ']'
+        ~$> _Array
+    integer = number ~$> _JInteger
     object =
-      _Object <.> token '{' &&& unsafeWhiteSpace
-        &&& sepByComma pair
-        &&& unsafeWhiteSpace
-        &&& token '}'
+      token '{' ~> unsafeWhiteSpace
+        ~> hmap sepByComma pair
+        ~> unsafeWhiteSpace
+        ~> token '}'
+        ~$> _Object
     pair =
-      (unsafeWhiteSpace **> string' >** unsafeWhiteSpace >** token ':' >** unsafeWhiteSpace)
-        &&& (json >** unsafeWhiteSpace)
+      unsafeWhiteSpace ~> string' ~> unsafeWhiteSpace ~> token ':' ~> unsafeWhiteSpace
+        ~& json ~> unsafeWhiteSpace
     sepByComma :: Eq a => m () a -> m () [a]
     sepByComma = sepBy (unsafeWhiteSpace >>> token ',' >>> unsafeWhiteSpace)
